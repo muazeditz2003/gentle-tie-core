@@ -1,0 +1,218 @@
+import { useState } from "react";
+import { Link, useSearchParams, useNavigate } from "react-router-dom";
+import { Mail, Lock, User, Phone, Eye, EyeOff } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import PasswordStrength from "@/components/PasswordStrength";
+import { validatePassword } from "@/lib/passwordValidation";
+import { useI18n } from "@/i18n";
+import logoImg from "@/assets/logo.png";
+
+const Register = () => {
+  const navigate = useNavigate();
+  const { t } = useI18n();
+  const [searchParams] = useSearchParams();
+  const defaultRole = searchParams.get("role") === "worker" ? "worker" : "customer";
+  const [role, setRole] = useState<"customer" | "worker">(defaultRole);
+  const [showPw, setShowPw] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [city, setCity] = useState("");
+  const [profession, setProfession] = useState("");
+  const [experience, setExperience] = useState("");
+  const [address, setAddress] = useState("");
+  const [serviceArea, setServiceArea] = useState("");
+  const [bloodGroup, setBloodGroup] = useState("");
+  const [willingToDonate, setWillingToDonate] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const normalizedName = name.trim();
+    const normalizedEmail = email.trim().toLowerCase();
+    const normalizedPhone = phone.trim();
+    const normalizedCity = city.trim();
+    const normalizedProfession = profession.trim();
+    const normalizedExperience = experience.trim();
+    const normalizedAddress = address.trim();
+    const normalizedServiceArea = serviceArea.split(",").map(i => i.trim()).filter(Boolean).join(", ");
+
+    if (!normalizedName || !normalizedEmail || !password) {
+      toast.error("Please fill in all required fields.");
+      return;
+    }
+    const pwValidation = validatePassword(password);
+    if (!pwValidation.isValid) {
+      toast.error("Password doesn't meet requirements: " + pwValidation.errors[0]);
+      return;
+    }
+    if (role === "worker" && (!normalizedProfession || !normalizedExperience)) {
+      toast.error("Please fill in profession and experience.");
+      return;
+    }
+
+    setLoading(true);
+    const metadata: Record<string, string> = { full_name: normalizedName, phone: normalizedPhone, role, city: normalizedCity, blood_group: bloodGroup, is_blood_donor: willingToDonate ? "true" : "false" };
+    if (role === "worker") {
+      metadata.profession = normalizedProfession;
+      metadata.experience = normalizedExperience;
+      metadata.address = normalizedAddress;
+      metadata.service_area = normalizedServiceArea;
+    }
+
+    const { data, error } = await supabase.auth.signUp({
+      email: normalizedEmail,
+      password,
+      options: { data: metadata, emailRedirectTo: window.location.origin },
+    });
+
+    setLoading(false);
+    if (error) {
+      if (error.message.toLowerCase().includes("already")) {
+        toast.error("This email is already registered. Please log in.");
+      } else {
+        toast.error(error.message);
+      }
+      return;
+    }
+    if (data.session) {
+      toast.success("Account created successfully!");
+      navigate("/", { replace: true });
+      return;
+    }
+    toast.success("Account created! Check your email to confirm.");
+    navigate("/login", { replace: true });
+  };
+
+  return (
+    <div className="min-h-screen bg-background flex items-center justify-center p-4">
+      <div className="absolute -top-40 -right-40 w-[500px] h-[500px] rounded-full bg-primary/5 blur-3xl" />
+      <div className="absolute -bottom-40 -left-40 w-[400px] h-[400px] rounded-full bg-[hsl(var(--gradient-end))]/5 blur-3xl" />
+
+      <div className="w-full max-w-md relative">
+        <Link to="/" className="flex items-center justify-center gap-2 mb-8">
+          <img src={logoImg} alt="Near Konnect" className="h-12 object-contain" />
+        </Link>
+
+        <div className="glass rounded-2xl p-6 md:p-8 shadow-premium">
+          <h1 className="text-2xl font-bold text-card-foreground mb-1">{t("register.title")}</h1>
+          <p className="text-sm text-muted-foreground mb-6">{t("register.subtitle")}</p>
+
+          <div className="flex gap-1 mb-6 p-1 bg-muted rounded-xl">
+            {(["customer", "worker"] as const).map(r => (
+              <button
+                key={r}
+                onClick={() => setRole(r)}
+                className={`flex-1 py-2.5 px-3 rounded-lg text-sm font-medium transition-all ${
+                  role === r
+                    ? "bg-gradient-brand text-primary-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-card-foreground"
+                }`}
+              >
+                {t(`register.${r}`)}
+              </button>
+            ))}
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <Label htmlFor="name">{t("register.fullName")} *</Label>
+              <div className="relative mt-1.5">
+                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input id="name" placeholder={t("register.fullName")} className="pl-10" value={name} onChange={e => setName(e.target.value)} />
+              </div>
+            </div>
+            <div>
+              <Label htmlFor="phone">{t("register.phone")}</Label>
+              <div className="relative mt-1.5">
+                <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input id="phone" placeholder="+92 3XX XXXXXXX" className="pl-10" value={phone} onChange={e => setPhone(e.target.value)} />
+              </div>
+            </div>
+            <div>
+              <Label htmlFor="email">{t("register.email")} *</Label>
+              <div className="relative mt-1.5">
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input id="email" type="email" placeholder="you@example.com" className="pl-10" value={email} onChange={e => setEmail(e.target.value)} />
+              </div>
+            </div>
+            <div>
+              <Label htmlFor="password">{t("register.password")} *</Label>
+              <div className="relative mt-1.5">
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input id="password" type={showPw ? "text" : "password"} placeholder="••••••••" className="pl-10 pr-10" value={password} onChange={e => setPassword(e.target.value)} />
+                <button type="button" onClick={() => setShowPw(!showPw)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+                  {showPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+              <PasswordStrength password={password} />
+            </div>
+            <div>
+              <Label htmlFor="city">{t("register.city")}</Label>
+              <Input id="city" placeholder="e.g. Lahore" className="mt-1.5" value={city} onChange={e => setCity(e.target.value)} />
+            </div>
+            <div>
+              <Label htmlFor="bloodGroup">Blood Group</Label>
+              <select id="bloodGroup" value={bloodGroup} onChange={e => setBloodGroup(e.target.value)} className="mt-1.5 w-full h-10 rounded-md border border-input bg-background px-3 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+                <option value="">Select blood group</option>
+                {["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"].map(bg => (
+                  <option key={bg} value={bg}>{bg}</option>
+                ))}
+              </select>
+            </div>
+            <div className="flex items-center gap-3 p-3 bg-muted rounded-lg">
+              <input
+                type="checkbox"
+                id="willingToDonate"
+                checked={willingToDonate}
+                onChange={e => setWillingToDonate(e.target.checked)}
+                className="w-4 h-4 rounded border-input text-primary focus:ring-primary"
+              />
+              <label htmlFor="willingToDonate" className="text-sm font-medium text-foreground cursor-pointer">
+                I am willing to donate blood
+              </label>
+            </div>
+
+            {role === "worker" && (
+              <>
+                <div>
+                  <Label htmlFor="profession">{t("register.profession")} *</Label>
+                  <Input id="profession" placeholder="e.g. Plumber, Electrician" className="mt-1.5" value={profession} onChange={e => setProfession(e.target.value)} />
+                </div>
+                <div>
+                  <Label htmlFor="experience">{t("register.experience")} *</Label>
+                  <Input id="experience" type="number" placeholder="e.g. 5" className="mt-1.5" value={experience} onChange={e => setExperience(e.target.value)} />
+                </div>
+                <div>
+                  <Label htmlFor="address">{t("register.address")}</Label>
+                  <Input id="address" placeholder={t("register.address")} className="mt-1.5" value={address} onChange={e => setAddress(e.target.value)} />
+                </div>
+                <div>
+                  <Label htmlFor="serviceArea">{t("register.serviceAreas")}</Label>
+                  <Input id="serviceArea" placeholder="DHA, Gulberg, Model Town" className="mt-1.5" value={serviceArea} onChange={e => setServiceArea(e.target.value)} />
+                </div>
+              </>
+            )}
+
+            <Button className="w-full bg-gradient-brand text-primary-foreground hover:opacity-90 shadow-md h-11 rounded-xl font-semibold" type="submit" disabled={loading}>
+              {loading ? t("register.submitting") : t("register.submit")}
+            </Button>
+          </form>
+
+          <p className="text-center text-sm text-muted-foreground mt-6">
+            {t("register.hasAccount")}{" "}
+            <Link to="/login" className="text-primary font-medium hover:underline">{t("nav.logIn")}</Link>
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default Register;
