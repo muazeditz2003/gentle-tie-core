@@ -1,29 +1,28 @@
 import { useState, useMemo, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
-import { Search, Map, MapPin, Navigation } from "lucide-react";
+import { Search, Map, List, MapPin, Navigation, SlidersHorizontal } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
 import WorkerCard from "@/components/WorkerCard";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { serviceCategories as mockCategories } from "@/data/mockData";
 import { getCurrentPosition, calculateDistance, type Coords } from "@/lib/geolocation";
-import { useI18n } from "@/i18n";
+import AppLayout from "@/components/AppLayout";
 
-type SortKey = "distance" | "rating" | "experience";
+type SortKey = "distance" | "rating" | "experience" | "price";
 
 const Discover = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
   const queryClient = useQueryClient();
-  const { t } = useI18n();
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState<SortKey>("distance");
+  const [priceBand, setPriceBand] = useState<"all" | "budget" | "mid" | "premium">("all");
+  const [minRating, setMinRating] = useState(0);
   const selectedCategory = searchParams.get("category") || "";
   const [userCoords, setUserCoords] = useState<Coords | null>(null);
   const [detectingLocation, setDetectingLocation] = useState(false);
@@ -174,16 +173,16 @@ const Discover = () => {
   };
 
   const sortLabels: Record<SortKey, string> = {
-    distance: t("discover.distance"),
-    rating: t("discover.rating"),
-    experience: t("discover.experience"),
+    distance: "Distance",
+    rating: "Rating",
+    experience: "Experience",
+    price: "Price",
   };
 
   if (authLoading) {
     return (
       <div className="min-h-screen bg-background">
-        <Navbar />
-        <div className="container mx-auto px-4 py-16 text-center">
+        <div className="px-4 py-16 text-center">
           <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
         </div>
       </div>
@@ -192,94 +191,120 @@ const Discover = () => {
 
   if (!user) return null;
 
-  return (
-    <div className="min-h-screen bg-background">
-      <Navbar />
+  const filteredWithAdvanced = filtered.filter((w) => {
+    if (minRating > 0 && w.rating < minRating) return false;
+    if (priceBand === "budget") return w.experience <= 2;
+    if (priceBand === "mid") return w.experience > 2 && w.experience <= 6;
+    if (priceBand === "premium") return w.experience > 6;
+    return true;
+  });
 
-      <div className="container mx-auto px-4 py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-foreground mb-2">{t("discover.title")}</h1>
-          <p className="text-sm text-muted-foreground mb-3">Workers can also browse and hire other professionals بسهولة</p>
-          <div className="flex items-center gap-2 text-muted-foreground text-sm">
-            <MapPin className="w-4 h-4" />
+  const sorted = [...filteredWithAdvanced].sort((a, b) => {
+    if (sort === "distance") return a.distance - b.distance;
+    if (sort === "rating") return b.rating - a.rating;
+    if (sort === "experience") return b.experience - a.experience;
+    return a.experience - b.experience;
+  });
+
+  return (
+    <AppLayout title="Explore" subtitle="Discover trusted workers nearby with smart filters and map/list browsing.">
+      <div className="space-y-5">
+        <div className="rounded-2xl border bg-muted/40 p-3">
+          <div className="mb-3 flex items-center gap-2 text-xs text-muted-foreground">
+            <MapPin className="h-3.5 w-3.5" />
             {userCoords ? (
-              <span>{t("discover.usingLocation")} ({userCoords.latitude.toFixed(2)}, {userCoords.longitude.toFixed(2)})</span>
+              <span>Using your location ({userCoords.latitude.toFixed(2)}, {userCoords.longitude.toFixed(2)})</span>
             ) : (
-              <span>{t("discover.detecting")}</span>
+              <span>Location unavailable</span>
             )}
-            <Button variant="ghost" size="sm" onClick={detectLocation} disabled={detectingLocation} className="gap-1 h-7 text-xs">
-              <Navigation className="w-3 h-3" /> {detectingLocation ? t("discover.detecting") : t("discover.refresh")}
+            <Button variant="ghost" size="sm" onClick={detectLocation} disabled={detectingLocation} className="h-6 gap-1 px-2 text-[11px]">
+              <Navigation className="h-3 w-3" /> {detectingLocation ? "Detecting..." : "Refresh"}
+            </Button>
+          </div>
+
+          <div className="mb-3 flex gap-2">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input placeholder="Find services near you..." value={search} onChange={(e) => setSearch(e.target.value)} className="h-11 rounded-xl bg-card pl-10" />
+            </div>
+            <Button variant="outline" size="icon" className="h-11 w-11 rounded-xl" onClick={() => setShowMapView((v) => !v)}>
+              {showMapView ? <List className="h-4 w-4" /> : <Map className="h-4 w-4" />}
+            </Button>
+          </div>
+
+          <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
+            {(["distance", "rating", "experience", "price"] as SortKey[]).map((s) => (
+              <Button key={s} variant={sort === s ? "default" : "outline"} size="sm" onClick={() => setSort(s)} className="shrink-0 rounded-full">
+                {sortLabels[s]}
+              </Button>
+            ))}
+            <Button variant="outline" size="sm" className="shrink-0 gap-1 rounded-full">
+              <SlidersHorizontal className="h-3.5 w-3.5" /> Filters
             </Button>
           </div>
         </div>
 
-        <div className="sticky top-16 z-30 mb-5 rounded-2xl bg-background/90 backdrop-blur supports-[backdrop-filter]:bg-background/75 py-2">
-          <div className="flex flex-col sm:flex-row gap-3">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input placeholder="Find services near you..." value={search} onChange={e => setSearch(e.target.value)} className="pl-10 h-11 rounded-xl" />
-            </div>
-            <div className="flex gap-2 overflow-x-auto">
-              {(["distance", "rating", "experience"] as SortKey[]).map(s => (
-                <Button
-                  key={s}
-                  variant={sort === s ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setSort(s)}
-                  className={`${sort === s ? "bg-gradient-brand text-primary-foreground" : ""} shrink-0 rounded-full`}
-                >
-                  {sortLabels[s]}
-                </Button>
-              ))}
-              <Button variant="outline" size="sm" className="rounded-full shrink-0 gap-1" onClick={() => setShowMapView(v => !v)}>
-                <Map className="w-3.5 h-3.5" /> {showMapView ? "List" : "Map"}
-              </Button>
-            </div>
-          </div>
-        </div>
-
-        <div className="flex gap-2 overflow-x-auto pb-4 mb-6 scrollbar-hide">
-          {categories.map(cat => (
+        <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
+          {categories.map((cat) => (
             <Badge
               key={cat.id}
               variant={selectedCategory === cat.id ? "default" : "outline"}
-              className={`cursor-pointer whitespace-nowrap px-3.5 py-1.5 text-sm hover:bg-accent transition-colors shrink-0 rounded-full ${
-                selectedCategory === cat.id ? "bg-gradient-brand text-primary-foreground border-transparent" : ""
-              }`}
+              className="cursor-pointer shrink-0 rounded-full px-3 py-1.5"
               onClick={() => toggleCategory(cat.id)}
             >
               {cat.icon} {cat.name}
-              {cat.name.toLowerCase().includes("blood") && (
-                <span className="ml-1 rounded-full bg-destructive px-1.5 py-0.5 text-[10px] text-destructive-foreground">Urgent</span>
-              )}
             </Badge>
           ))}
         </div>
 
-        <p className="text-sm text-muted-foreground mb-4">{filtered.length} {t("discover.workersFound")}</p>
+        <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
+          {([0, 3, 4, 4.5] as const).map((rating) => (
+            <Button
+              key={rating}
+              size="sm"
+              variant={minRating === rating ? "default" : "outline"}
+              onClick={() => setMinRating(rating)}
+              className="shrink-0 rounded-full"
+            >
+              {rating === 0 ? "All ratings" : `${rating}+ stars`}
+            </Button>
+          ))}
+          {(["all", "budget", "mid", "premium"] as const).map((band) => (
+            <Button
+              key={band}
+              size="sm"
+              variant={priceBand === band ? "default" : "outline"}
+              onClick={() => setPriceBand(band)}
+              className="shrink-0 rounded-full"
+            >
+              {band}
+            </Button>
+          ))}
+        </div>
+
+        <p className="text-sm text-muted-foreground">{sorted.length} workers found</p>
         {showMapView ? (
-          <div className="rounded-2xl border bg-card p-10 text-center">
-            <Map className="w-10 h-10 text-primary mx-auto mb-3" />
-            <p className="font-semibold text-card-foreground mb-1">Map view preview</p>
-            <p className="text-sm text-muted-foreground">Switch to list for quick booking and chat.</p>
+          <div className="rounded-2xl border bg-card p-12 text-center">
+            <Map className="mx-auto mb-2 h-9 w-9 text-primary" />
+            <p className="font-semibold text-card-foreground">Map view</p>
+            <p className="text-sm text-muted-foreground">Pin-based browsing can be connected next.</p>
           </div>
         ) : (
-          <div className="grid md:grid-cols-2 gap-4">
-            {filtered.map((w, i) => (
+          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+            {sorted.map((w, i) => (
               <WorkerCard key={w.id} worker={w} index={i} />
             ))}
           </div>
         )}
 
-        {filtered.length === 0 && (
-          <div className="text-center py-16">
-            <p className="text-muted-foreground">{t("discover.noWorkers")}</p>
+        {sorted.length === 0 && (
+          <div className="rounded-2xl border bg-muted/30 p-10 text-center">
+            <p className="font-semibold text-foreground">No workers match this filter set</p>
+            <p className="text-sm text-muted-foreground">Try widening distance, rating, or category filters.</p>
           </div>
         )}
       </div>
-
-      <Footer />
-    </div>
+    </AppLayout>
   );
 };
 

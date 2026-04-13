@@ -1,15 +1,16 @@
 import { useNavigate, Link } from "react-router-dom";
-import { ArrowLeft, MessageSquare } from "lucide-react";
-import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
+import { MessageSquare, Search } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { Input } from "@/components/ui/input";
+import AppLayout from "@/components/AppLayout";
 
 const Messages = () => {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
+  const [search, setSearch] = useState("");
 
   useEffect(() => {
     if (!loading && !user) navigate("/login");
@@ -55,45 +56,50 @@ const Messages = () => {
     enabled: !!user,
   });
 
+  const filteredConversations = useMemo(() => {
+    if (!search.trim()) return conversations;
+    const q = search.toLowerCase();
+    return conversations.filter((c: any) => c.name.toLowerCase().includes(q) || c.lastMessage.toLowerCase().includes(q));
+  }, [conversations, search]);
+
   if (loading) return null;
 
   return (
-    <div className="min-h-screen bg-background">
-      <Navbar />
-      <div className="container mx-auto px-4 py-8 max-w-2xl">
-        <h1 className="text-3xl font-bold text-foreground mb-6 flex items-center gap-2">
-          <MessageSquare className="w-7 h-7 text-primary" /> Messages
-        </h1>
+    <AppLayout title="Messages" subtitle="Chat with nearby helpers and confirm work quickly.">
+      <div className="space-y-4">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search conversations..." className="h-11 rounded-xl pl-10" />
+        </div>
 
-        {conversations.length === 0 ? (
-          <div className="text-center py-16">
-            <p className="text-muted-foreground">No conversations yet.</p>
+        {filteredConversations.length === 0 ? (
+          <div className="rounded-2xl border bg-muted/30 py-16 text-center">
+            <MessageSquare className="mx-auto mb-2 h-9 w-9 text-muted-foreground" />
+            <p className="font-medium text-foreground">No conversations yet</p>
+            <p className="text-sm text-muted-foreground">Start by messaging a worker from Explore.</p>
           </div>
         ) : (
           <div className="space-y-2">
-            {conversations.map((c: any) => (
+            {filteredConversations.map((c: any) => (
               <Link
                 key={c.userId}
                 to={`/chat/${c.userId}`}
-                className="flex items-center gap-4 p-4 bg-card border rounded-xl hover:border-primary/30 hover:shadow-md transition-all"
+                className="tap-feedback flex items-center gap-4 rounded-2xl border bg-card p-4 transition-all hover:border-primary/30 hover:shadow-md"
               >
-                <div className="w-12 h-12 rounded-full bg-accent flex items-center justify-center text-sm font-bold text-accent-foreground shrink-0">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-accent text-sm font-bold text-accent-foreground">
                   {c.name.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2)}
                 </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium text-card-foreground">{c.name}</p>
-                  <p className="text-sm text-muted-foreground truncate">{c.lastMessage}</p>
+                <div className="min-w-0 flex-1">
+                  <p className="font-semibold text-card-foreground">{c.name}</p>
+                  <p className="truncate text-sm text-muted-foreground">{c.lastMessage}</p>
                 </div>
-                <span className="text-xs text-muted-foreground shrink-0">
-                  {new Date(c.time).toLocaleDateString()}
-                </span>
+                <span className="shrink-0 text-xs text-muted-foreground">{new Date(c.time).toLocaleDateString()}</span>
               </Link>
             ))}
           </div>
         )}
       </div>
-      <Footer />
-    </div>
+    </AppLayout>
   );
 };
 

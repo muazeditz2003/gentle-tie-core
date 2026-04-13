@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Paperclip, Send } from "lucide-react";
+import { CheckCircle2, FileText, Paperclip, Send } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -94,6 +94,18 @@ const ChatWindow = ({ otherUserId, otherUserName }: Props) => {
     <div className="flex flex-col h-full">
       <div className="p-4 border-b bg-card/90 backdrop-blur">
         <h3 className="font-semibold text-card-foreground">{otherUserName}</h3>
+        <div className="mt-2 rounded-xl bg-muted px-3 py-2 text-xs text-muted-foreground">
+          <p className="font-medium text-foreground">Service Summary</p>
+          <p>Discuss scope, share timeline, then confirm booking in one tap.</p>
+          <div className="mt-2 flex gap-2">
+            <button className="tap-feedback inline-flex items-center gap-1 rounded-full bg-card px-2.5 py-1 text-[11px] font-medium text-foreground">
+              <FileText className="h-3 w-3" /> Send Offer
+            </button>
+            <button className="tap-feedback inline-flex items-center gap-1 rounded-full bg-card px-2.5 py-1 text-[11px] font-medium text-foreground">
+              <CheckCircle2 className="h-3 w-3" /> Confirm Booking
+            </button>
+          </div>
+        </div>
       </div>
 
       <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-3">
