@@ -62,6 +62,11 @@ const WorkerProfile = () => {
     enabled: !!id,
   });
 
+  useEffect(() => {
+    if (!dbWorker || !id) return;
+    void trackEvent("profile_view");
+  }, [id, dbWorker?.user_id]);
+
   if (!dbWorker) {
     return (
       <div className="min-h-screen bg-background">
@@ -114,10 +119,6 @@ const WorkerProfile = () => {
   const handleMessage = () => navigate(`/chat/${worker.userId}`);
 
   const initials = worker.name.split(" ").map(n => n[0]).join("");
-
-  useEffect(() => {
-    void trackEvent("profile_view");
-  }, [id, dbWorker?.user_id]);
 
   return (
     <AppLayout title="Service Profile" subtitle="Trust signals, reviews, and quick booking in one place.">
