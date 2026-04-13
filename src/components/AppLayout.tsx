@@ -1,8 +1,16 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Bell, Compass, HeartPulse, Home, MessageSquare, Search, UserRound } from "lucide-react";
+import { Bell, ChevronDown, Compass, HeartPulse, Home, LogOut, MessageSquare, Search, UserRound } from "lucide-react";
 import type { ReactNode } from "react";
 import NotificationBell from "@/components/NotificationBell";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/contexts/AuthContext";
 import { useUserRole } from "@/hooks/useUserRole";
@@ -18,10 +26,15 @@ interface AppLayoutProps {
 const AppLayout = ({ title, subtitle, action, children }: AppLayoutProps) => {
   const { pathname } = useLocation();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
   const { role } = useUserRole();
 
   const profilePath = role === "worker" ? "/worker-dashboard" : role === "admin" ? "/admin" : "/dashboard";
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate("/login");
+  };
 
   const navItems = [
     { label: "Home", to: "/", icon: Home },
@@ -87,9 +100,36 @@ const AppLayout = ({ title, subtitle, action, children }: AppLayoutProps) => {
               <Bell className="h-4 w-4" />
               <span className="hidden lg:inline">Activity</span>
             </Button>
-            <div className="rounded-2xl bg-muted px-3 py-2 text-sm font-medium text-foreground">
-              {user?.user_metadata?.full_name?.split(" ")[0] || "You"}
-            </div>
+
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="inline-flex items-center gap-2 rounded-2xl bg-muted px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-muted/80">
+                  <span>{user?.user_metadata?.full_name?.split(" ")[0] || "You"}</span>
+                  <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48 rounded-xl">
+                <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem className="cursor-pointer" onClick={() => navigate(profilePath)}>
+                  <UserRound className="mr-2 h-4 w-4" />
+                  Dashboard
+                </DropdownMenuItem>
+                <DropdownMenuItem className="cursor-pointer" onClick={() => navigate("/messages")}>
+                  <MessageSquare className="mr-2 h-4 w-4" />
+                  Messages
+                </DropdownMenuItem>
+                <DropdownMenuItem className="cursor-pointer" onClick={() => navigate("/discover")}>
+                  <Search className="mr-2 h-4 w-4" />
+                  Explore
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem className="cursor-pointer text-destructive focus:text-destructive" onClick={handleSignOut}>
+                  <LogOut className="mr-2 h-4 w-4" />
+                  Sign out
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
 
           <main className="rounded-3xl border bg-card p-6 shadow-premium">
