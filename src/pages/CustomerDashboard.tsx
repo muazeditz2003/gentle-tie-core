@@ -1,17 +1,16 @@
 import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { MessageSquare, Star, User, Search, Calendar, Clock } from "lucide-react";
+import { MessageSquare, Star, User, Search, Calendar, Clock, HeartPulse, Compass, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
 import AvatarUpload from "@/components/AvatarUpload";
 import UpgradeToWorker from "@/components/UpgradeToWorker";
 import BloodDonationCard from "@/components/BloodDonationCard";
+import AppLayout from "@/components/AppLayout";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -136,56 +135,127 @@ const CustomerDashboard = () => {
     return "bg-warning text-warning-foreground";
   };
 
+  const firstName = profile?.full_name?.split(" ")[0] || user?.user_metadata?.full_name?.split(" ")[0] || "there";
+
   if (authLoading) {
     return (
-      <div className="min-h-screen bg-background">
-        <Navbar />
-        <div className="container mx-auto px-4 py-16 text-center">
-          <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
-        </div>
+      <div className="grid min-h-screen place-items-center bg-background">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <Navbar />
-      <div className="container mx-auto px-4 py-8 max-w-4xl">
-        <div className="flex items-center justify-between mb-8">
-          <h1 className="text-3xl font-bold text-foreground">My Dashboard</h1>
-          <Button variant="hero" className="gap-2" onClick={() => navigate("/discover")}>
-            <Search className="w-4 h-4" /> Find Workers
-          </Button>
-        </div>
-
-        {/* Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+    <AppLayout
+      title={`Welcome, ${firstName}`}
+      subtitle="Your local help hub — bookings, chats, and urgent support in one place."
+      action={
+        <Button className="h-10 rounded-xl gap-2" onClick={() => navigate("/discover")}>
+          <Search className="h-4 w-4" /> Find Workers
+        </Button>
+      }
+    >
+      <section className="space-y-6">
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
           {[
             { label: "Messages", value: String(conversations.length), icon: MessageSquare },
             { label: "Bookings", value: String(myBookings.length), icon: Calendar },
             { label: "Reviews", value: String(myReviews.length), icon: Star },
-            { label: "Profile", value: profile?.full_name ? "Complete" : "Incomplete", icon: User },
-          ].map(s => (
-            <motion.div key={s.label} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="bg-card border rounded-xl p-4 text-center">
-              <s.icon className="w-5 h-5 text-primary mx-auto mb-2" />
+            { label: "Profile", value: profile?.full_name ? "Ready" : "Setup", icon: User },
+          ].map((s) => (
+            <motion.div
+              key={s.label}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="rounded-2xl border bg-card p-4"
+            >
+              <div className="mb-2 inline-flex rounded-xl bg-muted p-2">
+                <s.icon className="h-4 w-4 text-primary" />
+              </div>
               <p className="text-xl font-bold text-card-foreground">{s.value}</p>
               <p className="text-xs text-muted-foreground">{s.label}</p>
             </motion.div>
           ))}
         </div>
 
-        <Tabs defaultValue="profile" className="space-y-6">
-          <TabsList className="bg-muted">
-            <TabsTrigger value="profile">Profile</TabsTrigger>
-            <TabsTrigger value="blood">Blood Donation</TabsTrigger>
-            <TabsTrigger value="bookings">Bookings</TabsTrigger>
-            <TabsTrigger value="messages">Messages</TabsTrigger>
+        <div className="grid gap-3 md:grid-cols-3">
+          <button onClick={() => navigate("/discover")} className="tap-feedback rounded-2xl border bg-card p-4 text-left">
+            <Compass className="mb-2 h-5 w-5 text-primary" />
+            <p className="font-semibold text-card-foreground">Explore workers</p>
+            <p className="text-xs text-muted-foreground">Find trusted help nearby</p>
+          </button>
+          <button onClick={() => navigate("/blood-donors")} className="tap-feedback rounded-2xl border bg-card p-4 text-left">
+            <HeartPulse className="mb-2 h-5 w-5 text-destructive" />
+            <p className="font-semibold text-card-foreground">Urgent help</p>
+            <p className="text-xs text-muted-foreground">Request blood and emergency support</p>
+          </button>
+          <button onClick={() => navigate("/messages")} className="tap-feedback rounded-2xl border bg-card p-4 text-left">
+            <MessageSquare className="mb-2 h-5 w-5 text-secondary" />
+            <p className="font-semibold text-card-foreground">Continue chats</p>
+            <p className="text-xs text-muted-foreground">Talk with workers instantly</p>
+          </button>
+        </div>
+
+        <Tabs defaultValue="overview" className="space-y-4">
+          <TabsList className="grid h-auto w-full grid-cols-3 gap-2 rounded-2xl bg-muted p-1 md:grid-cols-5">
+            <TabsTrigger value="overview" className="rounded-xl">Overview</TabsTrigger>
+            <TabsTrigger value="profile" className="rounded-xl">Profile</TabsTrigger>
+            <TabsTrigger value="bookings" className="rounded-xl">Bookings</TabsTrigger>
+            <TabsTrigger value="messages" className="rounded-xl">Messages</TabsTrigger>
+            <TabsTrigger value="blood" className="rounded-xl">Blood</TabsTrigger>
           </TabsList>
 
+          <TabsContent value="overview" className="space-y-4">
+            <div className="rounded-2xl border bg-card p-5">
+              <div className="mb-4 flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-sm text-muted-foreground">Profile health</p>
+                  <p className="text-lg font-semibold text-card-foreground">{profile?.full_name ? "You’re ready to hire" : "Complete your profile"}</p>
+                </div>
+                <Sparkles className="h-5 w-5 text-primary" />
+              </div>
+              <p className="text-sm text-muted-foreground">Keep your city, phone and blood group updated for faster local matches.</p>
+            </div>
+
+            <div className="grid gap-4 lg:grid-cols-2">
+              <div className="rounded-2xl border bg-card p-5">
+                <h3 className="mb-3 font-semibold text-card-foreground">Recent bookings</h3>
+                {myBookings.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">No bookings yet.</p>
+                ) : (
+                  <div className="space-y-2">
+                    {myBookings.slice(0, 3).map((b: any) => (
+                      <div key={b.id} className="rounded-xl bg-muted/50 p-3">
+                        <p className="text-sm font-medium text-card-foreground">{b.workers?.profiles?.full_name || "Worker"}</p>
+                        <p className="text-xs text-muted-foreground truncate">{b.service_description}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="rounded-2xl border bg-card p-5">
+                <h3 className="mb-3 font-semibold text-card-foreground">Recent chats</h3>
+                {conversations.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">No conversations yet.</p>
+                ) : (
+                  <div className="space-y-2">
+                    {conversations.slice(0, 3).map((c: any) => (
+                      <Link key={c.userId} to={`/chat/${c.userId}`} className="block rounded-xl bg-muted/50 p-3 hover:bg-muted">
+                        <p className="text-sm font-medium text-card-foreground">{c.name}</p>
+                        <p className="text-xs text-muted-foreground truncate">{c.lastMessage}</p>
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </TabsContent>
+
           <TabsContent value="profile">
-            <div className="bg-card border rounded-2xl p-6">
-              <h2 className="font-semibold text-card-foreground mb-4">Edit Profile</h2>
-              <div className="flex items-start gap-4 mb-6">
+            <div className="rounded-2xl border bg-card p-6">
+              <h2 className="mb-4 font-semibold text-card-foreground">Edit Profile</h2>
+              <div className="mb-6 flex items-start gap-4">
                 <AvatarUpload currentUrl={profile?.avatar_url} onUpload={handleAvatarUpload} />
                 <div className="flex-1 space-y-1">
                   <p className="font-semibold text-card-foreground">{profile?.full_name || user?.email}</p>
@@ -208,7 +278,6 @@ const CustomerDashboard = () => {
                 <Button onClick={handleSave} disabled={saving}>{saving ? "Saving..." : "Save Changes"}</Button>
               </div>
 
-              {/* Upgrade to Worker */}
               {role !== "worker" && (
                 <div className="mt-6">
                   <UpgradeToWorker />
@@ -224,20 +293,20 @@ const CustomerDashboard = () => {
           <TabsContent value="bookings">
             <div className="space-y-3">
               {myBookings.length === 0 ? (
-                <div className="text-center py-12">
-                  <Calendar className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
+                <div className="rounded-2xl border bg-card p-10 text-center">
+                  <Calendar className="mx-auto mb-3 h-12 w-12 text-muted-foreground" />
                   <p className="text-muted-foreground">No bookings yet. Find a worker and book a service!</p>
                 </div>
               ) : (
                 myBookings.map((b: any) => (
-                  <div key={b.id} className="bg-card border rounded-xl p-4">
-                    <div className="flex items-center justify-between">
+                  <div key={b.id} className="rounded-2xl border bg-card p-4">
+                    <div className="flex items-center justify-between gap-4">
                       <div>
                         <p className="font-medium text-card-foreground">{b.workers?.profiles?.full_name || "Worker"} · {b.workers?.profession}</p>
-                        <p className="text-sm text-muted-foreground mt-1">{b.service_description}</p>
-                        <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
-                          <span className="flex items-center gap-1"><Calendar className="w-3 h-3" /> {new Date(b.booking_date).toLocaleDateString()}</span>
-                          <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> {b.booking_time}</span>
+                        <p className="mt-1 text-sm text-muted-foreground">{b.service_description}</p>
+                        <div className="mt-2 flex items-center gap-3 text-xs text-muted-foreground">
+                          <span className="flex items-center gap-1"><Calendar className="h-3 w-3" /> {new Date(b.booking_date).toLocaleDateString()}</span>
+                          <span className="flex items-center gap-1"><Clock className="h-3 w-3" /> {b.booking_time}</span>
                         </div>
                       </div>
                       <Badge className={statusColor(b.status)}>{b.status}</Badge>
@@ -249,20 +318,20 @@ const CustomerDashboard = () => {
           </TabsContent>
 
           <TabsContent value="messages">
-            <div className="bg-card border rounded-2xl p-6">
-              <h2 className="font-semibold text-card-foreground mb-4">Recent Chats</h2>
+            <div className="rounded-2xl border bg-card p-6">
+              <h2 className="mb-4 font-semibold text-card-foreground">Recent Chats</h2>
               {conversations.length === 0 ? (
                 <p className="text-sm text-muted-foreground">No conversations yet.</p>
               ) : (
                 <div className="space-y-2">
                   {conversations.map((c: any) => (
-                    <Link key={c.userId} to={`/chat/${c.userId}`} className="flex items-center gap-4 p-3 rounded-xl bg-muted/50 hover:bg-muted transition-colors">
-                      <div className="w-10 h-10 rounded-full bg-accent flex items-center justify-center text-sm font-bold text-accent-foreground shrink-0">
+                    <Link key={c.userId} to={`/chat/${c.userId}`} className="flex items-center gap-4 rounded-xl bg-muted/50 p-3 transition-colors hover:bg-muted">
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-accent text-sm font-bold text-accent-foreground">
                         {c.name.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2)}
                       </div>
-                      <div className="flex-1 min-w-0">
+                      <div className="min-w-0 flex-1">
                         <p className="font-medium text-card-foreground">{c.name}</p>
-                        <p className="text-sm text-muted-foreground truncate">{c.lastMessage}</p>
+                        <p className="truncate text-sm text-muted-foreground">{c.lastMessage}</p>
                       </div>
                       <span className="text-xs text-muted-foreground">{new Date(c.time).toLocaleDateString()}</span>
                     </Link>
@@ -272,9 +341,8 @@ const CustomerDashboard = () => {
             </div>
           </TabsContent>
         </Tabs>
-      </div>
-      <Footer />
-    </div>
+      </section>
+    </AppLayout>
   );
 };
 
