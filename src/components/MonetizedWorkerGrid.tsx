@@ -14,22 +14,40 @@ interface MonetizedWorkerGridProps {
 const MonetizedWorkerGrid = ({
   workers,
   ads,
-  adFrequencyMin = 5,
+  adFrequencyMin = 4,
   className = "grid gap-3 md:grid-cols-2 xl:grid-cols-3",
 }: MonetizedWorkerGridProps) => {
   if (workers.length === 0) return null;
 
-  const safeInterval = Math.max(4, adFrequencyMin || 5);
+  const safeInterval = Math.max(4, adFrequencyMin || 4);
+  const effectiveAds: NativeAd[] = ads.length
+    ? ads
+    : [
+        {
+          id: "placeholder-ad",
+          title: "Your Ad Here",
+          description: "Promote your business to nearby clients with native placements.",
+          image_url: null,
+          cta_label: "Learn More",
+          cta_url: "#",
+        },
+      ];
   const feed: Array<{ type: "worker"; worker: FeedWorker } | { type: "ad"; ad: NativeAd }> = [];
   let adIndex = 0;
+  let insertedAds = 0;
 
   workers.forEach((worker, index) => {
     feed.push({ type: "worker", worker });
-    if ((index + 1) % safeInterval === 0 && ads.length > 0) {
-      feed.push({ type: "ad", ad: ads[adIndex % ads.length] });
+    if ((index + 1) % safeInterval === 0) {
+      feed.push({ type: "ad", ad: effectiveAds[adIndex % effectiveAds.length] });
       adIndex += 1;
+      insertedAds += 1;
     }
   });
+
+  if (insertedAds === 0) {
+    feed.push({ type: "ad", ad: effectiveAds[0] });
+  }
 
   return (
     <div className={className}>

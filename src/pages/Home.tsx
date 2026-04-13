@@ -6,8 +6,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import WorkerCard from "@/components/WorkerCard";
+import MonetizedWorkerGrid from "@/components/MonetizedWorkerGrid";
+import type { NativeAd } from "@/components/NativeAdCard";
 import ActiveBloodRequests from "@/components/ActiveBloodRequests";
-import { serviceCategories } from "@/data/mockData";
+import { serviceCategories, workers as mockWorkers } from "@/data/mockData";
 import { supabase } from "@/integrations/supabase/client";
 import type { Worker } from "@/data/mockData";
 import { useAuth } from "@/contexts/AuthContext";
@@ -18,6 +20,24 @@ const fadeUp = {
   visible: (i: number) => ({ opacity: 1, y: 0, transition: { delay: i * 0.07, duration: 0.35 } }),
 };
 
+const placeholderFeedAd: NativeAd = {
+  id: "placeholder-ad",
+  title: "Your Ad Here",
+  description: "Promote your business to local clients with native placements.",
+  image_url: null,
+  cta_label: "Learn More",
+  cta_url: "#",
+};
+
+const placeholderBannerAd: NativeAd = {
+  id: "placeholder-banner",
+  title: "Advertise Your Business Here",
+  description: "Reach nearby clients right where they discover services.",
+  image_url: null,
+  cta_label: "Learn More",
+  cta_url: "#",
+};
+
 const Home = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -25,6 +45,11 @@ const Home = () => {
   const [workers, setWorkers] = useState<Worker[]>([]);
   const [loading, setLoading] = useState(true);
   const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [featuredWorkers, setFeaturedWorkers] = useState<Array<Worker & { isSponsored?: boolean }>>(
+    mockWorkers.slice(0, 3).map((w) => ({ ...w, isSponsored: true })),
+  );
+  const [feedAds, setFeedAds] = useState<NativeAd[]>([placeholderFeedAd]);
+  const [bannerAd, setBannerAd] = useState<NativeAd>(placeholderBannerAd);
 
   const firstName = user?.user_metadata?.full_name?.split(" ")[0] || "there";
 
@@ -82,6 +107,29 @@ const Home = () => {
           });
 
         setWorkers(mapped);
+
+        const [featuredRes, adsRes] = await Promise.all([
+          (supabase as any).from("featured_services").select("service_id, rotation_seed").eq("is_active", true),
+          (supabase as any)
+            .from("native_ads")
+            .select("id,title,description,image_url,cta_label,cta_url,placement,priority")
+            .eq("is_active", true),
+        ]);
+
+        const featuredIds = new Set<string>((featuredRes.data || []).map((row: any) => row.service_id));
+        const sponsored = mapped.filter((w) => featuredIds.has(w.id)).sort(() => Math.random() - 0.5);
+        const regularPool = [...mapped, ...mockWorkers].filter(
+          (candidate, i, arr) => arr.findIndex((w) => w.id === candidate.id) === i,
+        );
+        const fallbackFeatured = regularPool.filter((w) => !sponsored.some((s) => s.id === w.id));
+        const featuredCombined = [...sponsored, ...fallbackFeatured].slice(0, 3).map((w) => ({ ...w, isSponsored: true }));
+        setFeaturedWorkers(featuredCombined.length ? featuredCombined : mockWorkers.slice(0, 3).map((w) => ({ ...w, isSponsored: true })));
+
+        const ads = (adsRes.data || []) as NativeAd[];
+        const homepageFeedAds = ads.filter((ad: any) => ["home_feed", "discover_feed", "search_results"].includes(ad.placement));
+        const homepageBanner = ads.find((ad: any) => ad.placement === "home_banner");
+        setFeedAds(homepageFeedAds.length ? homepageFeedAds : [placeholderFeedAd]);
+        setBannerAd(homepageBanner || placeholderBannerAd);
       }
       setLoading(false);
     };
@@ -166,6 +214,35 @@ const Home = () => {
               </button>
             ))}
           </div>
+
+          <div className="mt-3 rounded-2xl border border-primary/25 bg-primary/5 p-4">
+            {bannerAd.image_url ? (
+              <div className="relative overflow-hidden rounded-xl">
+                <img
+                  src={bannerAd.image_url}
+                  alt={bannerAd.title}
+                  className="h-28 w-full object-cover sm:h-32"
+                  loading="lazy"
+                />
+                <div className="absolute inset-0 flex items-end justify-between bg-gradient-to-t from-background/90 to-transparent p-3">
+                  <p className="text-sm font-semibold text-foreground">{bannerAd.title || "Advertise Your Business Here"}</p>
+                  <Button asChild size="sm" variant="secondary" className="rounded-lg">
+                    <a href={bannerAd.cta_url} target="_blank" rel="noreferrer">{bannerAd.cta_label || "Learn More"}</a>
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div className="flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center">
+                <div>
+                  <p className="text-base font-semibold text-foreground">Advertise Your Business Here</p>
+                  <p className="text-sm text-muted-foreground">Show your brand inside NearKonnect with native sponsored placements.</p>
+                </div>
+                <Button asChild className="rounded-xl">
+                  <a href={bannerAd.cta_url} target="_blank" rel="noreferrer">{bannerAd.cta_label || "Learn More"}</a>
+                </Button>
+              </div>
+            )}
+          </div>
         </motion.div>
 
         <motion.div initial="hidden" animate="visible" variants={fadeUp} custom={1} className="grid grid-cols-1 gap-3 sm:grid-cols-3">
@@ -198,6 +275,18 @@ const Home = () => {
 
         <motion.section initial="hidden" animate="visible" variants={fadeUp} custom={3}>
           <div className="mb-3 flex items-center justify-between">
+            <h2 className="text-lg font-bold text-foreground">Featured Workers</h2>
+            <Badge variant="outline" className="rounded-full">Sponsored</Badge>
+          </div>
+          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+            {featuredWorkers.slice(0, 3).map((w, i) => (
+              <WorkerCard key={`featured-${w.id}-${i}`} worker={w} index={i} sponsored />
+            ))}
+          </div>
+        </motion.section>
+
+        <motion.section initial="hidden" animate="visible" variants={fadeUp} custom={4}>
+          <div className="mb-3 flex items-center justify-between">
             <h2 className="text-lg font-bold text-foreground">Nearby Services</h2>
             <Button variant="ghost" size="sm" onClick={() => navigate("/discover")} className="gap-1">
               Explore <ArrowRight className="h-4 w-4" />
@@ -216,15 +305,15 @@ const Home = () => {
               <p className="text-sm text-muted-foreground">Try another search or browse categories.</p>
             </div>
           ) : (
-            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-              {nearbyWorkers.map((w, i) => (
-                <WorkerCard key={w.id} worker={w} index={i} />
-              ))}
-            </div>
+            <MonetizedWorkerGrid
+              workers={nearbyWorkers.map((w) => ({ ...w, isSponsored: featuredWorkers.some((f) => f.id === w.id) }))}
+              ads={feedAds.length ? feedAds : [placeholderFeedAd]}
+              adFrequencyMin={4}
+            />
           )}
         </motion.section>
 
-        <motion.section initial="hidden" animate="visible" variants={fadeUp} custom={4}>
+        <motion.section initial="hidden" animate="visible" variants={fadeUp} custom={5}>
           <h2 className="mb-3 text-lg font-bold text-foreground">Categories</h2>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
             {quickCategories.map((category) => (
