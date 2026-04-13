@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import WorkerCard from "@/components/WorkerCard";
 import MonetizedWorkerGrid from "@/components/MonetizedWorkerGrid";
 import type { NativeAd } from "@/components/NativeAdCard";
+import NativeAdCard from "@/components/NativeAdCard";
 import ActiveBloodRequests from "@/components/ActiveBloodRequests";
 import { serviceCategories, workers as mockWorkers } from "@/data/mockData";
 import { supabase } from "@/integrations/supabase/client";
@@ -38,6 +39,8 @@ const placeholderBannerAd: NativeAd = {
   cta_url: "#",
 };
 
+const shuffleArray = <T,>(items: T[]) => [...items].sort(() => Math.random() - 0.5);
+
 const Home = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -56,81 +59,91 @@ const Home = () => {
   useEffect(() => {
     const fetchWorkers = async () => {
       setLoading(true);
+      const [workersRes, featuredRes, adsRes] = await Promise.all([
+        supabase
+          .from("workers")
+          .select("*, profiles!workers_user_id_fkey_profiles(full_name, phone, avatar_url)")
+          .eq("available", true)
+          .order("experience", { ascending: false })
+          .limit(24),
+        (supabase as any)
+          .from("featured_services")
+          .select("id, service_id, priority, rotation_seed")
+          .eq("is_active", true)
+          .order("priority", { ascending: false }),
+        (supabase as any)
+          .from("native_ads")
+          .select("id,title,description,image_url,cta_label,cta_url,placement,priority")
+          .eq("is_active", true)
+          .order("priority", { ascending: false }),
+      ]);
 
-      const { data } = await supabase
-        .from("workers")
-        .select(
-          "*, profiles!workers_user_id_fkey_profiles(full_name, phone, avatar_url)"
-        )
-        .eq("available", true)
-        .order("experience", { ascending: false })
-        .limit(24);
+      const workerData = workersRes.data || [];
+      const workerIds = workerData.map((w) => w.id);
+      const { data: reviewData } = workerIds.length
+        ? await supabase.from("reviews").select("worker_id, rating").in("worker_id", workerIds)
+        : { data: [] as Array<{ worker_id: string; rating: number }> };
 
-      if (data) {
-        const workerIds = data.map((w) => w.id);
-        const { data: reviewData } = await supabase
-          .from("reviews")
-          .select("worker_id, rating")
-          .in("worker_id", workerIds);
+      const reviewMap: Record<string, { sum: number; count: number }> = {};
+      reviewData?.forEach((r) => {
+        if (!reviewMap[r.worker_id]) reviewMap[r.worker_id] = { sum: 0, count: 0 };
+        reviewMap[r.worker_id].sum += r.rating;
+        reviewMap[r.worker_id].count += 1;
+      });
 
-        const reviewMap: Record<string, { sum: number; count: number }> = {};
-        reviewData?.forEach((r) => {
-          if (!reviewMap[r.worker_id])
-            reviewMap[r.worker_id] = { sum: 0, count: 0 };
-          reviewMap[r.worker_id].sum += r.rating;
-          reviewMap[r.worker_id].count += 1;
-        });
+      const mapDbWorker = (w: any): Worker => {
+        const profile = w.profiles as any;
+        const rev = reviewMap[w.id];
+        return {
+          id: w.id,
+          name: profile?.full_name || "Worker",
+          profession: w.profession,
+          rating: rev ? Math.round((rev.sum / rev.count) * 10) / 10 : 0,
+          reviewCount: rev?.count || 0,
+          experience: w.experience,
+          distance: 0,
+          available: w.available,
+          verified: w.verified,
+          phone: profile?.phone || "",
+          description: w.description || "",
+          serviceAreas: w.service_areas || [],
+          profilePhoto: profile?.avatar_url || "",
+          city: w.city || "",
+        };
+      };
 
-        const mapped: Worker[] = data
-          .filter((w) => w.user_id !== user?.id)
-          .map((w) => {
-            const profile = w.profiles as any;
-            const rev = reviewMap[w.id];
-            return {
-              id: w.id,
-              name: profile?.full_name || "Worker",
-              profession: w.profession,
-              rating: rev
-                ? Math.round((rev.sum / rev.count) * 10) / 10
-                : 0,
-              reviewCount: rev?.count || 0,
-              experience: w.experience,
-              distance: 0,
-              available: w.available,
-              verified: w.verified,
-              phone: profile?.phone || "",
-              description: w.description || "",
-              serviceAreas: w.service_areas || [],
-              profilePhoto: profile?.avatar_url || "",
-              city: w.city || "",
-            };
-          });
+      const mapped = workerData.filter((w) => w.user_id !== user?.id).map(mapDbWorker);
+      setWorkers(mapped);
 
-        setWorkers(mapped);
+      const featuredRows = (featuredRes.data || []) as Array<{ service_id: string }>;
+      const featuredIds = [...new Set(featuredRows.map((row) => row.service_id))];
 
-        const [featuredRes, adsRes] = await Promise.all([
-          (supabase as any).from("featured_services").select("service_id, rotation_seed").eq("is_active", true),
-          (supabase as any)
-            .from("native_ads")
-            .select("id,title,description,image_url,cta_label,cta_url,placement,priority")
-            .eq("is_active", true),
-        ]);
+      let featuredPool = mapped.filter((w) => featuredIds.includes(w.id));
+      const missingFeaturedIds = featuredIds.filter((id) => !featuredPool.some((w) => w.id === id));
 
-        const featuredIds = new Set<string>((featuredRes.data || []).map((row: any) => row.service_id));
-        const sponsored = mapped.filter((w) => featuredIds.has(w.id)).sort(() => Math.random() - 0.5);
-        const regularPool = [...mapped, ...mockWorkers].filter(
-          (candidate, i, arr) => arr.findIndex((w) => w.id === candidate.id) === i,
-        );
-        const fallbackFeatured = regularPool.filter((w) => !sponsored.some((s) => s.id === w.id));
-        const featuredCombined = [...sponsored, ...fallbackFeatured].slice(0, 3).map((w) => ({ ...w, isSponsored: true }));
-        setFeaturedWorkers(featuredCombined.length ? featuredCombined : mockWorkers.slice(0, 3).map((w) => ({ ...w, isSponsored: true })));
-
-        const ads = (adsRes.data || []) as NativeAd[];
-        const homepageFeedAds = ads.filter((ad: any) => ["home_feed", "discover_feed", "search_results"].includes(ad.placement));
-        const homepageBanner = ads.find((ad: any) => ad.placement === "home_banner");
-        setFeedAds(homepageFeedAds.length ? homepageFeedAds : [placeholderFeedAd]);
-        setBannerAd(homepageBanner || placeholderBannerAd);
+      if (missingFeaturedIds.length) {
+        const { data: missingRows } = await supabase
+          .from("workers")
+          .select("*, profiles!workers_user_id_fkey_profiles(full_name, phone, avatar_url)")
+          .in("id", missingFeaturedIds);
+        featuredPool = [...featuredPool, ...((missingRows || []).map(mapDbWorker) as Worker[])];
       }
+
+      const regularPool = [...mapped, ...mockWorkers].filter(
+        (candidate, i, arr) => arr.findIndex((w) => w.id === candidate.id) === i,
+      );
+      const featuredCombined = [
+        ...shuffleArray(featuredPool).map((w) => ({ ...w, isSponsored: true })),
+        ...regularPool.filter((w) => !featuredPool.some((s) => s.id === w.id)).map((w) => ({ ...w, isSponsored: true })),
+      ].slice(0, 3);
+      setFeaturedWorkers(featuredCombined.length ? featuredCombined : mockWorkers.slice(0, 3).map((w) => ({ ...w, isSponsored: true })));
+
+      const ads = (adsRes.data || []) as Array<NativeAd & { placement: string; priority?: number }>;
+      const homepageFeedAds = ads.filter((ad) => ["home_feed", "discover_feed", "search_results"].includes(ad.placement));
+      const homepageBanner = ads.find((ad) => ad.placement === "home_banner");
+      setFeedAds(homepageFeedAds.length ? homepageFeedAds : [placeholderFeedAd]);
+      setBannerAd(homepageBanner || placeholderBannerAd);
+
       setLoading(false);
     };
     fetchWorkers();
@@ -299,10 +312,13 @@ const Home = () => {
               ))}
             </div>
           ) : nearbyWorkers.length === 0 ? (
-            <div className="rounded-2xl border bg-muted/30 p-8 text-center">
-              <Sparkles className="mx-auto mb-2 h-8 w-8 text-muted-foreground" />
-              <p className="font-semibold text-foreground">No matching services yet</p>
-              <p className="text-sm text-muted-foreground">Try another search or browse categories.</p>
+            <div className="space-y-4">
+              <NativeAdCard ad={feedAds[0] || placeholderFeedAd} />
+              <div className="rounded-2xl border bg-muted/30 p-8 text-center">
+                <Sparkles className="mx-auto mb-2 h-8 w-8 text-muted-foreground" />
+                <p className="font-semibold text-foreground">No matching services yet</p>
+                <p className="text-sm text-muted-foreground">Try another search or browse categories.</p>
+              </div>
             </div>
           ) : (
             <MonetizedWorkerGrid
