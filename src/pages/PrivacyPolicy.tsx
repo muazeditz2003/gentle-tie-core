@@ -15,7 +15,7 @@ const PrivacyPolicy = () => (
         <h2 className="text-lg font-semibold text-foreground">Location Data</h2>
         <p>With your permission, we collect and process location data to show you workers near your location. You can disable location services at any time through your browser or device settings.</p>
         <h2 className="text-lg font-semibold text-foreground">Data Sharing</h2>
-        <p>We do not sell your personal information. We share your profile information only with other users as necessary to facilitate the connection between customers and workers on the platform.</p>
+        <p>We do not sell your personal information. We share your profile information only with other clients as necessary to facilitate the connection between customers and workers on the platform.</p>
         <h2 className="text-lg font-semibold text-foreground">Data Security</h2>
         <p>We implement appropriate security measures to protect your personal information. However, no method of transmission over the Internet is 100% secure.</p>
         <h2 className="text-lg font-semibold text-foreground">Contact Us</h2>

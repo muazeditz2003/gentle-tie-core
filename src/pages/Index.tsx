@@ -216,7 +216,7 @@ const Index = () => {
             </div>
             <div className="grid grid-cols-2 gap-3">
               {[
-                { label: "Active users", value: "1.2k+", icon: Users },
+                { label: "Active clients", value: "1.2k+", icon: Users },
                 { label: "Urgent requests", value: "Live", icon: HeartPulse },
                 { label: "Instant chat", value: "Enabled", icon: MessageSquare },
                 { label: "Categories", value: String(serviceCategories.length), icon: Compass },
