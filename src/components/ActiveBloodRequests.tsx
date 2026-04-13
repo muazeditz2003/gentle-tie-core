@@ -10,12 +10,17 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
 
 const urgencyStyles: Record<string, string> = {
-  normal: "bg-green-100 text-green-700 border-green-200",
-  urgent: "bg-orange-100 text-orange-700 border-orange-200",
-  critical: "bg-red-100 text-red-700 border-red-200 animate-pulse",
+  normal: "bg-success/15 text-success border-success/20",
+  urgent: "bg-warning/15 text-warning border-warning/20",
+  critical: "bg-destructive/15 text-destructive border-destructive/20 animate-pulse",
 };
 
-const ActiveBloodRequests = () => {
+interface ActiveBloodRequestsProps {
+  compact?: boolean;
+  hideTitle?: boolean;
+}
+
+const ActiveBloodRequests = ({ compact = false, hideTitle = false }: ActiveBloodRequestsProps) => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -63,23 +68,25 @@ const ActiveBloodRequests = () => {
   if (requests.length === 0) return null;
 
   return (
-    <section className="container mx-auto px-4 py-8">
-      <div className="flex items-center gap-2 mb-5">
-        <AlertTriangle className="w-5 h-5 text-red-500" />
+    <section className={compact ? "py-2" : "container mx-auto px-4 py-8"}>
+      {!hideTitle && (
+      <div className="mb-5 flex items-center gap-2">
+        <AlertTriangle className="h-5 w-5 text-destructive" />
         <h2 className="text-xl md:text-2xl font-bold text-foreground">Active Blood Requests</h2>
-        <Badge className="bg-red-500 text-white rounded-full ml-2">{requests.length}</Badge>
+        <Badge className="ml-2 rounded-full bg-destructive text-destructive-foreground">{requests.length}</Badge>
       </div>
-      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+      )}
+      <div className={compact ? "-mx-1 flex gap-3 overflow-x-auto px-1 pb-2" : "grid gap-4 md:grid-cols-2 lg:grid-cols-3"}>
         {requests.map((req, i) => (
           <motion.div
             key={req.id}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: i * 0.05 }}
-            className="bg-card border rounded-2xl p-5 hover:shadow-lg transition-shadow relative overflow-hidden"
+            className={`relative overflow-hidden rounded-2xl border bg-card p-5 transition-shadow hover:shadow-lg ${compact ? "w-[290px] shrink-0" : ""}`}
           >
             {req.urgency === "critical" && (
-              <div className="absolute top-0 left-0 right-0 h-1 bg-red-500" />
+              <div className="absolute left-0 right-0 top-0 h-1 bg-destructive" />
             )}
             <div className="flex items-start justify-between mb-3">
               <div>
@@ -97,8 +104,8 @@ const ActiveBloodRequests = () => {
             </div>
 
             <div className="flex items-center gap-3 mb-3">
-              <div className="w-12 h-12 rounded-xl bg-red-500/10 flex items-center justify-center">
-                <span className="text-lg font-extrabold text-red-600">{req.blood_group}</span>
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-destructive/10">
+                <span className="text-lg font-extrabold text-destructive">{req.blood_group}</span>
               </div>
               <div className="flex-1">
                 <p className="text-sm font-medium text-foreground">Needs {req.blood_group} blood</p>
@@ -118,10 +125,10 @@ const ActiveBloodRequests = () => {
             {req.requester_id !== user?.id && (
               <Button
                 size="sm"
-                className="w-full gap-1.5 rounded-xl bg-red-500 hover:bg-red-600 text-white"
+                className="w-full gap-1.5 rounded-xl bg-destructive text-destructive-foreground hover:bg-destructive/90"
                 onClick={() => navigate(`/chat/${req.requester_id}`)}
               >
-                <MessageSquare className="w-3.5 h-3.5" /> Respond to Request
+                <MessageSquare className="h-3.5 w-3.5" /> Help Now
               </Button>
             )}
           </motion.div>
