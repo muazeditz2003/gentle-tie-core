@@ -11,10 +11,12 @@ export function useUserRole() {
       const { data, error } = await supabase
         .from("user_roles")
         .select("role")
-        .eq("user_id", user!.id)
-        .maybeSingle();
+        .eq("user_id", user!.id);
       if (error) throw error;
-      return data?.role || "customer";
+      const roles = (data || []).map((r) => r.role);
+      if (roles.includes("admin")) return "admin";
+      if (roles.includes("worker")) return "worker";
+      return "customer";
     },
     enabled: !!user,
   });
