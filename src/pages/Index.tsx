@@ -8,6 +8,8 @@ import { Badge } from "@/components/ui/badge";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import WorkerCard from "@/components/WorkerCard";
+import NativeAdCard, { type NativeAd } from "@/components/NativeAdCard";
+import MonetizedWorkerGrid from "@/components/MonetizedWorkerGrid";
 import { serviceCategories } from "@/data/mockData";
 import { supabase } from "@/integrations/supabase/client";
 import type { Worker } from "@/data/mockData";
@@ -32,6 +34,9 @@ const Index = () => {
   const [topWorkers, setTopWorkers] = useState<Worker[]>([]);
   const [search, setSearch] = useState("");
   const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [feedAds, setFeedAds] = useState<NativeAd[]>([]);
+  const [bannerAds, setBannerAds] = useState<NativeAd[]>([]);
+  const [adFrequency, setAdFrequency] = useState(5);
   const { user, loading } = useAuth();
 
   useEffect(() => {
@@ -57,8 +62,7 @@ const Index = () => {
           reviewMap[r.worker_id].count += 1;
         });
 
-        setTopWorkers(
-          data.map((w) => {
+        const mapped = data.map((w) => {
             const profile = w.profiles as any;
             const rev = reviewMap[w.id];
             return {
@@ -77,8 +81,30 @@ const Index = () => {
               profilePhoto: profile?.avatar_url || "",
               city: w.city || "",
             };
-          })
-        );
+          });
+
+        const [featuredRes, boostsRes, adsRes, placementRes] = await Promise.all([
+          (supabase as any).from("featured_services").select("service_id").eq("is_active", true),
+          (supabase as any).from("service_boosts").select("service_id").eq("status", "active"),
+          (supabase as any)
+            .from("native_ads")
+            .select("id,title,description,image_url,cta_label,cta_url,placement")
+            .eq("is_active", true),
+          (supabase as any).from("ad_placement_settings").select("frequency_min").eq("placement_key", "home_feed").maybeSingle(),
+        ]);
+
+        const sponsorIds = new Set<string>([
+          ...(featuredRes.data || []).map((r: any) => r.service_id),
+          ...(boostsRes.data || []).map((r: any) => r.service_id),
+        ]);
+        const sponsored = mapped.filter((w) => sponsorIds.has(w.id)).sort(() => Math.random() - 0.5);
+        const normal = mapped.filter((w) => !sponsorIds.has(w.id));
+        setTopWorkers([...sponsored, ...normal]);
+
+        const ads = (adsRes.data || []) as NativeAd[];
+        setFeedAds(ads.filter((a: any) => a.placement === "home_feed"));
+        setBannerAds(ads.filter((a: any) => a.placement === "home_banner"));
+        setAdFrequency(Math.max(4, placementRes.data?.frequency_min || 5));
       }
     };
     fetchWorkers();
@@ -138,6 +164,14 @@ const Index = () => {
             ))}
           </div>
 
+          {bannerAds.length > 0 && (
+            <div className="grid gap-3 md:grid-cols-2">
+              {bannerAds.slice(0, 2).map((ad) => (
+                <NativeAdCard key={ad.id} ad={ad} />
+              ))}
+            </div>
+          )}
+
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
               <Button className="h-11 justify-start rounded-xl" onClick={() => navigate("/discover")}>Find a Service</Button>
             <Button variant="outline" className="h-11 justify-start rounded-xl" onClick={() => navigate("/blood-donors")}>Request Urgent Help</Button>
@@ -196,11 +230,11 @@ const Index = () => {
               <p className="text-sm text-muted-foreground">Please check back in a moment.</p>
             </div>
           ) : (
-            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-              {topWorkers.map((w, i) => (
-                <WorkerCard key={w.id} worker={w} index={i} />
-              ))}
-            </div>
+            <MonetizedWorkerGrid
+              workers={topWorkers.map((w) => ({ ...w, isSponsored: topWorkers[0] ? true && false : false }))}
+              ads={feedAds}
+              adFrequencyMin={adFrequency}
+            />
           )}
         </motion.section>
 

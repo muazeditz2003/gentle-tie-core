@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import WorkerCard from "@/components/WorkerCard";
+import MonetizedWorkerGrid from "@/components/MonetizedWorkerGrid";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -26,6 +27,27 @@ const Discover = () => {
   const [userCoords, setUserCoords] = useState<Coords | null>(null);
   const [detectingLocation, setDetectingLocation] = useState(false);
   const [showMapView, setShowMapView] = useState(false);
+
+  const { data: monetization } = useQuery({
+    queryKey: ["discover_monetization"],
+    queryFn: async () => {
+      const [featuredRes, boostsRes, adsRes, settingRes] = await Promise.all([
+        (supabase as any).from("featured_services").select("service_id, rotation_seed").eq("is_active", true),
+        (supabase as any).from("service_boosts").select("service_id").eq("status", "active"),
+        (supabase as any)
+          .from("native_ads")
+          .select("id,title,description,image_url,cta_label,cta_url,placement,priority")
+          .eq("is_active", true),
+        (supabase as any).from("ad_placement_settings").select("frequency_min").eq("placement_key", "discover_feed").maybeSingle(),
+      ]);
+      return {
+        featured: featuredRes.data || [],
+        boosts: boostsRes.data || [],
+        ads: adsRes.data || [],
+        frequency: settingRes.data?.frequency_min || 5,
+      };
+    },
+  });
 
   useEffect(() => {
     detectLocation();
@@ -161,6 +183,13 @@ const Discover = () => {
     return list;
   }, [workersList, selectedCategory, search, sort, user, dbWorkers]);
 
+  const sponsoredServiceIds = useMemo(() => {
+    const ids = new Set<string>();
+    (monetization?.featured || []).forEach((row: any) => ids.add(row.service_id));
+    (monetization?.boosts || []).forEach((row: any) => ids.add(row.service_id));
+    return ids;
+  }, [monetization]);
+
   const toggleCategory = (id: string) => {
     if (selectedCategory === id) searchParams.delete("category");
     else searchParams.set("category", id);
@@ -183,11 +212,19 @@ const Discover = () => {
   });
 
   const sorted = [...filteredWithAdvanced].sort((a, b) => {
+    const aSponsored = sponsoredServiceIds.has(a.id) ? 1 : 0;
+    const bSponsored = sponsoredServiceIds.has(b.id) ? 1 : 0;
+    if (aSponsored !== bSponsored) return bSponsored - aSponsored;
     if (sort === "distance") return a.distance - b.distance;
     if (sort === "rating") return b.rating - a.rating;
     if (sort === "experience") return b.experience - a.experience;
     return a.experience - b.experience;
   });
+
+  const discoverAds = useMemo(() => {
+    const placement = selectedCategory ? "category_feed" : "discover_feed";
+    return (monetization?.ads || []).filter((a: any) => a.placement === placement || a.placement === "search_results");
+  }, [monetization, selectedCategory]);
 
   return (
     <AppLayout title="Explore" subtitle="Discover trusted services nearby with smart filters and map/list browsing.">
@@ -273,11 +310,11 @@ const Discover = () => {
             <p className="text-sm text-muted-foreground">Pin-based browsing can be connected next.</p>
           </div>
         ) : (
-          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-            {sorted.map((w, i) => (
-              <WorkerCard key={w.id} worker={w} index={i} />
-            ))}
-          </div>
+          <MonetizedWorkerGrid
+            workers={sorted.map((w) => ({ ...w, isSponsored: sponsoredServiceIds.has(w.id) }))}
+            ads={discoverAds}
+            adFrequencyMin={Math.max(4, monetization?.frequency || 5)}
+          />
         )}
 
         {sorted.length === 0 && (
