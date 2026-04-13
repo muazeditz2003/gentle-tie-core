@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Users, Briefcase, Shield, Trash2, CheckCircle, XCircle, Plus, Heart, Droplet } from "lucide-react";
+import { Users, Briefcase, Shield, Trash2, CheckCircle, XCircle, Plus, Heart, Droplet, Megaphone, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -18,9 +18,18 @@ const AdminDashboard = () => {
   const { user, loading: authLoading } = useAuth();
   const { role, isLoading: roleLoading } = useUserRole();
   const queryClient = useQueryClient();
-  const [tab, setTab] = useState<"workers" | "users" | "categories" | "donors">("workers");
+  const [tab, setTab] = useState<"workers" | "users" | "categories" | "donors" | "featured" | "ads">("workers");
   const [newCatName, setNewCatName] = useState("");
   const [newCatIcon, setNewCatIcon] = useState("");
+  const [featureWorkerId, setFeatureWorkerId] = useState("");
+  const [featurePriority, setFeaturePriority] = useState("100");
+  const [adTitle, setAdTitle] = useState("");
+  const [adDescription, setAdDescription] = useState("");
+  const [adImageUrl, setAdImageUrl] = useState("");
+  const [adLink, setAdLink] = useState("");
+  const [adCtaLabel, setAdCtaLabel] = useState("Learn More");
+  const [adPlacement, setAdPlacement] = useState<"home_banner" | "home_feed">("home_banner");
+  const [adPriority, setAdPriority] = useState("100");
 
   useEffect(() => {
     if (!authLoading && !roleLoading && role !== "admin") {
@@ -71,12 +80,135 @@ const AdminDashboard = () => {
     },
     enabled: role === "admin",
   });
+  const { data: featuredServices = [] } = useQuery({
+    queryKey: ["admin_featured_services"],
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from("featured_services")
+        .select("id, service_id, owner_user_id, priority, is_active, created_at")
+        .order("priority", { ascending: false });
+      if (error) throw error;
+      return data;
+    },
+    enabled: role === "admin",
+  });
+
+  const { data: nativeAds = [] } = useQuery({
+    queryKey: ["admin_native_ads"],
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from("native_ads")
+        .select("id, title, image_url, cta_url, cta_label, placement, ad_type, priority, is_active, created_at")
+        .order("priority", { ascending: false });
+      if (error) throw error;
+      return data;
+    },
+    enabled: role === "admin",
+  });
   const [donorFilter, setDonorFilter] = useState("");
+
+  const featuredMap = new Map((featuredServices as any[]).map((row) => [row.service_id, row]));
 
   const toggleVerified = async (workerId: string, current: boolean) => {
     await supabase.from("workers").update({ verified: !current }).eq("id", workerId);
     queryClient.invalidateQueries({ queryKey: ["admin_workers"] });
     toast.success(current ? "Worker unverified" : "Worker verified!");
+  };
+
+  const addFeatured = async (workerId?: string) => {
+    const targetWorkerId = workerId || featureWorkerId;
+    if (!targetWorkerId) return;
+    const worker = (workers as any[]).find((w) => w.id === targetWorkerId);
+
+    const { error } = await (supabase as any).from("featured_services").insert({
+      service_id: targetWorkerId,
+      owner_user_id: worker?.user_id || null,
+      priority: Number(featurePriority) || 100,
+      is_active: true,
+    });
+
+    if (error) {
+      toast.error("Failed to feature worker");
+      return;
+    }
+
+    toast.success("Worker added to featured listings");
+    setFeatureWorkerId("");
+    queryClient.invalidateQueries({ queryKey: ["admin_featured_services"] });
+  };
+
+  const removeFeatured = async (id: string) => {
+    const { error } = await (supabase as any).from("featured_services").delete().eq("id", id);
+    if (error) {
+      toast.error("Failed to remove featured listing");
+      return;
+    }
+    toast.success("Removed from featured listings");
+    queryClient.invalidateQueries({ queryKey: ["admin_featured_services"] });
+  };
+
+  const toggleFeaturedActive = async (id: string, active: boolean) => {
+    const { error } = await (supabase as any).from("featured_services").update({ is_active: !active }).eq("id", id);
+    if (error) {
+      toast.error("Failed to update featured status");
+      return;
+    }
+    toast.success(!active ? "Featured listing enabled" : "Featured listing disabled");
+    queryClient.invalidateQueries({ queryKey: ["admin_featured_services"] });
+  };
+
+  const addAd = async () => {
+    if (!adTitle.trim() || !adLink.trim()) {
+      toast.error("Ad title and link are required");
+      return;
+    }
+
+    const { error } = await (supabase as any).from("native_ads").insert({
+      title: adTitle.trim(),
+      description: adDescription.trim() || null,
+      image_url: adImageUrl.trim() || null,
+      cta_url: adLink.trim(),
+      cta_label: adCtaLabel.trim() || "Learn More",
+      placement: adPlacement,
+      ad_type: adPlacement === "home_banner" ? "banner" : "in_feed",
+      is_active: true,
+      priority: Number(adPriority) || 100,
+      created_by: user?.id || null,
+    });
+
+    if (error) {
+      toast.error("Failed to create ad");
+      return;
+    }
+
+    toast.success("Ad created successfully");
+    setAdTitle("");
+    setAdDescription("");
+    setAdImageUrl("");
+    setAdLink("");
+    setAdCtaLabel("Learn More");
+    setAdPriority("100");
+    queryClient.invalidateQueries({ queryKey: ["admin_native_ads"] });
+  };
+
+  const toggleAdActive = async (id: string, active: boolean) => {
+    const { error } = await (supabase as any).from("native_ads").update({ is_active: !active }).eq("id", id);
+    if (error) {
+      toast.error("Failed to update ad status");
+      return;
+    }
+    toast.success(!active ? "Ad enabled" : "Ad disabled");
+    queryClient.invalidateQueries({ queryKey: ["admin_native_ads"] });
+  };
+
+  const deleteAd = async (id: string) => {
+    const { error } = await (supabase as any).from("native_ads").delete().eq("id", id);
+    if (error) {
+      toast.error("Failed to delete ad");
+      return;
+    }
+    toast.success("Ad deleted");
+    queryClient.invalidateQueries({ queryKey: ["admin_native_ads"] });
   };
 
   const addCategory = async () => {
@@ -141,6 +273,8 @@ const AdminDashboard = () => {
             { label: "Workers", value: workers.length, icon: Briefcase },
             { label: "Categories", value: categories.length, icon: Shield },
             { label: "Blood Donors", value: bloodDonors.length, icon: Heart },
+            { label: "Featured", value: featuredServices.length, icon: Star },
+            { label: "Ads", value: nativeAds.length, icon: Megaphone },
           ].map(s => (
             <motion.div key={s.label} initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-card border rounded-xl p-4 text-center">
               <s.icon className="w-5 h-5 text-primary mx-auto mb-2" />
@@ -152,7 +286,7 @@ const AdminDashboard = () => {
 
         {/* Tabs */}
         <div className="flex gap-2 mb-6 p-1 bg-muted rounded-lg w-fit flex-wrap">
-          {(["workers", "users", "categories", "donors"] as const).map(t => (
+          {(["workers", "users", "categories", "donors", "featured", "ads"] as const).map(t => (
             <button
               key={t}
               onClick={() => setTab(t)}
@@ -181,6 +315,17 @@ const AdminDashboard = () => {
                   <Badge variant={w.available ? "default" : "secondary"} className={w.available ? "bg-success text-success-foreground" : ""}>
                     {w.available ? "Available" : "Offline"}
                   </Badge>
+                  <Button
+                    variant={featuredMap.has(w.id) ? "secondary" : "outline"}
+                    size="sm"
+                    onClick={() => {
+                      const featured = featuredMap.get(w.id);
+                      if (featured) removeFeatured(featured.id);
+                      else addFeatured(w.id);
+                    }}
+                  >
+                    {featuredMap.has(w.id) ? "Unfeature" : "Feature"}
+                  </Button>
                   <Button
                     variant={w.verified ? "outline" : "default"}
                     size="sm"
@@ -284,6 +429,111 @@ const AdminDashboard = () => {
               {bloodDonors.filter((d: any) => !donorFilter || d.blood_group === donorFilter).length === 0 && (
                 <p className="text-muted-foreground text-center py-8">No blood donors found.</p>
               )}
+            </div>
+          </div>
+        )}
+
+        {tab === "featured" && (
+          <div className="space-y-4">
+            <div className="rounded-xl border bg-card p-4">
+              <h3 className="font-semibold text-card-foreground mb-3">Add Featured Worker</h3>
+              <div className="grid gap-3 md:grid-cols-4">
+                <select
+                  value={featureWorkerId}
+                  onChange={(e) => setFeatureWorkerId(e.target.value)}
+                  className="h-10 rounded-md border bg-background px-3 text-sm"
+                >
+                  <option value="">Select worker</option>
+                  {(workers as any[]).map((w) => (
+                    <option key={w.id} value={w.id}>
+                      {w.profiles?.full_name || "Unnamed"} — {w.profession}
+                    </option>
+                  ))}
+                </select>
+                <Input
+                  placeholder="Priority (100)"
+                  value={featurePriority}
+                  onChange={(e) => setFeaturePriority(e.target.value)}
+                />
+                <Button onClick={() => addFeatured()} className="md:col-span-2 gap-1">
+                  <Plus className="w-4 h-4" /> Add to Featured
+                </Button>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              {(featuredServices as any[]).map((f) => {
+                const linkedWorker = (workers as any[]).find((w) => w.id === f.service_id);
+                return (
+                  <div key={f.id} className="flex items-center gap-3 rounded-xl border bg-card p-3">
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-card-foreground">
+                        {linkedWorker?.profiles?.full_name || linkedWorker?.profession || "Service"}
+                      </p>
+                      <p className="text-sm text-muted-foreground">Priority: {f.priority} · {f.is_active ? "Active" : "Disabled"}</p>
+                    </div>
+                    <Button size="sm" variant="outline" onClick={() => toggleFeaturedActive(f.id, f.is_active)}>
+                      {f.is_active ? "Disable" : "Enable"}
+                    </Button>
+                    <Button size="sm" variant="ghost" className="text-destructive" onClick={() => removeFeatured(f.id)}>
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
+                );
+              })}
+              {featuredServices.length === 0 && <p className="text-muted-foreground text-center py-8">No featured workers yet.</p>}
+            </div>
+          </div>
+        )}
+
+        {tab === "ads" && (
+          <div className="space-y-4">
+            <div className="rounded-xl border bg-card p-4">
+              <h3 className="font-semibold text-card-foreground mb-3">Create Ad</h3>
+              <div className="grid gap-3 md:grid-cols-2">
+                <Input placeholder="Ad title" value={adTitle} onChange={(e) => setAdTitle(e.target.value)} />
+                <Input placeholder="CTA link" value={adLink} onChange={(e) => setAdLink(e.target.value)} />
+                <Input placeholder="Image URL" value={adImageUrl} onChange={(e) => setAdImageUrl(e.target.value)} />
+                <Input placeholder="CTA label" value={adCtaLabel} onChange={(e) => setAdCtaLabel(e.target.value)} />
+                <Input placeholder="Description" value={adDescription} onChange={(e) => setAdDescription(e.target.value)} className="md:col-span-2" />
+                <div className="flex gap-2">
+                  <select
+                    value={adPlacement}
+                    onChange={(e) => setAdPlacement(e.target.value as "home_banner" | "home_feed")}
+                    className="h-10 flex-1 rounded-md border bg-background px-3 text-sm"
+                  >
+                    <option value="home_banner">Banner</option>
+                    <option value="home_feed">Feed</option>
+                  </select>
+                  <Input placeholder="Priority" value={adPriority} onChange={(e) => setAdPriority(e.target.value)} className="w-28" />
+                </div>
+                <Button onClick={addAd} className="gap-1">
+                  <Plus className="w-4 h-4" /> Add Ad
+                </Button>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              {(nativeAds as any[]).map((ad) => (
+                <div key={ad.id} className="flex items-center gap-3 rounded-xl border bg-card p-3">
+                  <div className="h-12 w-16 overflow-hidden rounded-md border bg-muted">
+                    {ad.image_url ? <img src={ad.image_url} alt={ad.title} className="h-full w-full object-cover" loading="lazy" /> : null}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-card-foreground truncate">{ad.title}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {ad.placement} · Priority {ad.priority} · {ad.is_active ? "Active" : "Disabled"}
+                    </p>
+                  </div>
+                  <Button size="sm" variant="outline" onClick={() => toggleAdActive(ad.id, ad.is_active)}>
+                    {ad.is_active ? "Disable" : "Enable"}
+                  </Button>
+                  <Button size="sm" variant="ghost" className="text-destructive" onClick={() => deleteAd(ad.id)}>
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </div>
+              ))}
+              {nativeAds.length === 0 && <p className="text-muted-foreground text-center py-8">No ads yet.</p>}
             </div>
           </div>
         )}
