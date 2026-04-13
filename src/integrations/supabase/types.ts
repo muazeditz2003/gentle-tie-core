@@ -14,16 +14,266 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      ad_placement_settings: {
+        Row: {
+          config: Json
+          created_at: string
+          enabled: boolean
+          frequency_max: number
+          frequency_min: number
+          id: string
+          placement_key: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          config?: Json
+          created_at?: string
+          enabled?: boolean
+          frequency_max?: number
+          frequency_min?: number
+          id?: string
+          placement_key: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          config?: Json
+          created_at?: string
+          enabled?: boolean
+          frequency_max?: number
+          frequency_min?: number
+          id?: string
+          placement_key?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
+      featured_services: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          ends_at: string | null
+          id: string
+          is_active: boolean
+          owner_user_id: string | null
+          priority: number
+          rotation_seed: number
+          service_id: string
+          starts_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          ends_at?: string | null
+          id?: string
+          is_active?: boolean
+          owner_user_id?: string | null
+          priority?: number
+          rotation_seed?: number
+          service_id: string
+          starts_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          ends_at?: string | null
+          id?: string
+          is_active?: boolean
+          owner_user_id?: string | null
+          priority?: number
+          rotation_seed?: number
+          service_id?: string
+          starts_at?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      native_ads: {
+        Row: {
+          ad_type: string
+          created_at: string
+          created_by: string | null
+          cta_label: string
+          cta_url: string
+          description: string | null
+          ends_at: string | null
+          id: string
+          image_url: string | null
+          is_active: boolean
+          placement: string
+          priority: number
+          starts_at: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          ad_type?: string
+          created_at?: string
+          created_by?: string | null
+          cta_label?: string
+          cta_url: string
+          description?: string | null
+          ends_at?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          placement?: string
+          priority?: number
+          starts_at?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          ad_type?: string
+          created_at?: string
+          created_by?: string | null
+          cta_label?: string
+          cta_url?: string
+          description?: string | null
+          ends_at?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          placement?: string
+          priority?: number
+          starts_at?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      service_analytics_events: {
+        Row: {
+          created_at: string
+          event_type: Database["public"]["Enums"]["analytics_event_type"]
+          id: string
+          metadata: Json
+          owner_user_id: string | null
+          service_id: string
+          source: string
+        }
+        Insert: {
+          created_at?: string
+          event_type: Database["public"]["Enums"]["analytics_event_type"]
+          id?: string
+          metadata?: Json
+          owner_user_id?: string | null
+          service_id: string
+          source?: string
+        }
+        Update: {
+          created_at?: string
+          event_type?: Database["public"]["Enums"]["analytics_event_type"]
+          id?: string
+          metadata?: Json
+          owner_user_id?: string | null
+          service_id?: string
+          source?: string
+        }
+        Relationships: []
+      }
+      service_boosts: {
+        Row: {
+          boost_type: Database["public"]["Enums"]["boost_type"]
+          created_at: string
+          ends_at: string | null
+          id: string
+          metadata: Json
+          owner_user_id: string
+          price_cents: number | null
+          service_id: string
+          starts_at: string | null
+          status: Database["public"]["Enums"]["boost_status"]
+          updated_at: string
+          visibility_multiplier: number
+        }
+        Insert: {
+          boost_type: Database["public"]["Enums"]["boost_type"]
+          created_at?: string
+          ends_at?: string | null
+          id?: string
+          metadata?: Json
+          owner_user_id: string
+          price_cents?: number | null
+          service_id: string
+          starts_at?: string | null
+          status?: Database["public"]["Enums"]["boost_status"]
+          updated_at?: string
+          visibility_multiplier?: number
+        }
+        Update: {
+          boost_type?: Database["public"]["Enums"]["boost_type"]
+          created_at?: string
+          ends_at?: string | null
+          id?: string
+          metadata?: Json
+          owner_user_id?: string
+          price_cents?: number | null
+          service_id?: string
+          starts_at?: string | null
+          status?: Database["public"]["Enums"]["boost_status"]
+          updated_at?: string
+          visibility_multiplier?: number
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_service_analytics_summary: {
+        Args: { _days?: number; _owner_user_id: string; _service_id: string }
+        Returns: {
+          contact_clicks: number
+          conversion_rate: number
+          conversions: number
+          messages_received: number
+          profile_views: number
+        }[]
+      }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      analytics_event_type:
+        | "profile_view"
+        | "contact_click"
+        | "message_received"
+        | "conversion"
+      app_role: "customer" | "worker" | "admin"
+      boost_status: "pending" | "active" | "expired" | "rejected"
+      boost_type: "featured_listing" | "priority_ranking" | "urgent_boost"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +400,16 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      analytics_event_type: [
+        "profile_view",
+        "contact_click",
+        "message_received",
+        "conversion",
+      ],
+      app_role: ["customer", "worker", "admin"],
+      boost_status: ["pending", "active", "expired", "rejected"],
+      boost_type: ["featured_listing", "priority_ranking", "urgent_boost"],
+    },
   },
 } as const
