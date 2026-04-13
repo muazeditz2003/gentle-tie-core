@@ -146,6 +146,48 @@ export type Database = {
         }
         Relationships: []
       }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          blood_group: string | null
+          city: string | null
+          created_at: string
+          donor_status: string
+          full_name: string
+          id: string
+          is_blood_donor: boolean
+          phone: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          blood_group?: string | null
+          city?: string | null
+          created_at?: string
+          donor_status?: string
+          full_name?: string
+          id?: string
+          is_blood_donor?: boolean
+          phone?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          avatar_url?: string | null
+          blood_group?: string | null
+          city?: string | null
+          created_at?: string
+          donor_status?: string
+          full_name?: string
+          id?: string
+          is_blood_donor?: boolean
+          phone?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       service_analytics_events: {
         Row: {
           created_at: string
@@ -239,6 +281,57 @@ export type Database = {
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
+        }
+        Relationships: []
+      }
+      workers: {
+        Row: {
+          available: boolean
+          city: string | null
+          cnic: string | null
+          created_at: string
+          description: string | null
+          experience: number
+          id: string
+          latitude: number | null
+          longitude: number | null
+          profession: string
+          service_areas: string[]
+          updated_at: string
+          user_id: string
+          verified: boolean
+        }
+        Insert: {
+          available?: boolean
+          city?: string | null
+          cnic?: string | null
+          created_at?: string
+          description?: string | null
+          experience?: number
+          id?: string
+          latitude?: number | null
+          longitude?: number | null
+          profession: string
+          service_areas?: string[]
+          updated_at?: string
+          user_id: string
+          verified?: boolean
+        }
+        Update: {
+          available?: boolean
+          city?: string | null
+          cnic?: string | null
+          created_at?: string
+          description?: string | null
+          experience?: number
+          id?: string
+          latitude?: number | null
+          longitude?: number | null
+          profession?: string
+          service_areas?: string[]
+          updated_at?: string
+          user_id?: string
+          verified?: boolean
         }
         Relationships: []
       }
