@@ -1,11 +1,11 @@
 import { useParams, Link } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
-import Navbar from "@/components/Navbar";
 import ChatWindow from "@/components/ChatWindow";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useUserRole } from "@/hooks/useUserRole";
+import AppLayout from "@/components/AppLayout";
 
 const Chat = () => {
   const { userId } = useParams();
@@ -31,17 +31,16 @@ const Chat = () => {
   const backLink = role === "worker" ? "/worker-dashboard" : "/dashboard";
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
-      <Navbar />
-      <div className="container mx-auto px-4 py-4 flex-1 flex flex-col max-w-2xl">
-        <Link to={backLink} className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-primary mb-2">
-          <ArrowLeft className="w-4 h-4" /> Back to dashboard
+    <AppLayout title="Chat" subtitle={`Conversation with ${otherProfile?.full_name || "User"}`}>
+      <div className="flex flex-1 flex-col">
+        <Link to={backLink} className="mb-2 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-primary">
+          <ArrowLeft className="h-4 w-4" /> Back
         </Link>
-        <div className="flex-1 bg-card border rounded-2xl overflow-hidden flex flex-col" style={{ minHeight: "60vh" }}>
+        <div className="flex min-h-[62vh] flex-1 flex-col overflow-hidden rounded-2xl border bg-card">
           <ChatWindow otherUserId={userId} otherUserName={otherProfile?.full_name || "User"} />
         </div>
       </div>
-    </div>
+    </AppLayout>
   );
 };
 
