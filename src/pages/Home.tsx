@@ -131,7 +131,7 @@ const Home = () => {
   return (
     <AppLayout
       title={`Welcome back, ${firstName}`}
-      subtitle="Find local help in seconds — services, urgent requests, and trusted nearby workers."
+      subtitle="Find local help in seconds — services, urgent requests, and trusted nearby services."
       action={
         <Button className="h-10 rounded-xl" onClick={() => navigate("/blood-donors")}>
           Request Help
@@ -171,7 +171,7 @@ const Home = () => {
         <motion.div initial="hidden" animate="visible" variants={fadeUp} custom={1} className="grid grid-cols-1 gap-3 sm:grid-cols-3">
           <button onClick={() => navigate("/discover")} className="tap-feedback rounded-2xl border bg-card p-4 text-left">
             <UserSearch className="mb-2 h-5 w-5 text-primary" />
-            <p className="font-semibold text-foreground">Find a Worker</p>
+            <p className="font-semibold text-foreground">Find a Service</p>
             <p className="text-xs text-muted-foreground">Trusted people near your location</p>
           </button>
           <button onClick={() => navigate("/blood-donors")} className="tap-feedback rounded-2xl border bg-card p-4 text-left">
@@ -198,7 +198,7 @@ const Home = () => {
 
         <motion.section initial="hidden" animate="visible" variants={fadeUp} custom={3}>
           <div className="mb-3 flex items-center justify-between">
-            <h2 className="text-lg font-bold text-foreground">Nearby Workers</h2>
+            <h2 className="text-lg font-bold text-foreground">Nearby Services</h2>
             <Button variant="ghost" size="sm" onClick={() => navigate("/discover")} className="gap-1">
               Explore <ArrowRight className="h-4 w-4" />
             </Button>
@@ -212,7 +212,7 @@ const Home = () => {
           ) : nearbyWorkers.length === 0 ? (
             <div className="rounded-2xl border bg-muted/30 p-8 text-center">
               <Sparkles className="mx-auto mb-2 h-8 w-8 text-muted-foreground" />
-              <p className="font-semibold text-foreground">No matching workers yet</p>
+              <p className="font-semibold text-foreground">No matching services yet</p>
               <p className="text-sm text-muted-foreground">Try another search or browse categories.</p>
             </div>
           ) : (

@@ -151,7 +151,7 @@ const CustomerDashboard = () => {
       subtitle="Your local help hub — bookings, chats, and urgent support in one place."
       action={
         <Button className="h-10 rounded-xl gap-2" onClick={() => navigate("/discover")}>
-          <Search className="h-4 w-4" /> Find Workers
+          <Search className="h-4 w-4" /> Find Services
         </Button>
       }
     >
@@ -181,7 +181,7 @@ const CustomerDashboard = () => {
         <div className="grid gap-3 md:grid-cols-3">
           <button onClick={() => navigate("/discover")} className="tap-feedback rounded-2xl border bg-card p-4 text-left">
             <Compass className="mb-2 h-5 w-5 text-primary" />
-            <p className="font-semibold text-card-foreground">Explore workers</p>
+            <p className="font-semibold text-card-foreground">Explore services</p>
             <p className="text-xs text-muted-foreground">Find trusted help nearby</p>
           </button>
           <button onClick={() => navigate("/blood-donors")} className="tap-feedback rounded-2xl border bg-card p-4 text-left">
@@ -192,7 +192,7 @@ const CustomerDashboard = () => {
           <button onClick={() => navigate("/messages")} className="tap-feedback rounded-2xl border bg-card p-4 text-left">
             <MessageSquare className="mb-2 h-5 w-5 text-secondary" />
             <p className="font-semibold text-card-foreground">Continue chats</p>
-            <p className="text-xs text-muted-foreground">Talk with workers instantly</p>
+            <p className="text-xs text-muted-foreground">Talk with services instantly</p>
           </button>
         </div>
 
@@ -226,7 +226,7 @@ const CustomerDashboard = () => {
                   <div className="space-y-2">
                     {myBookings.slice(0, 3).map((b: any) => (
                       <div key={b.id} className="rounded-xl bg-muted/50 p-3">
-                        <p className="text-sm font-medium text-card-foreground">{b.workers?.profiles?.full_name || "Worker"}</p>
+                        <p className="text-sm font-medium text-card-foreground">{b.workers?.profiles?.full_name || "Service"}</p>
                         <p className="text-xs text-muted-foreground truncate">{b.service_description}</p>
                       </div>
                     ))}
@@ -295,14 +295,14 @@ const CustomerDashboard = () => {
               {myBookings.length === 0 ? (
                 <div className="rounded-2xl border bg-card p-10 text-center">
                   <Calendar className="mx-auto mb-3 h-12 w-12 text-muted-foreground" />
-                  <p className="text-muted-foreground">No bookings yet. Find a worker and book a service!</p>
+                  <p className="text-muted-foreground">No bookings yet. Find a service and book now!</p>
                 </div>
               ) : (
                 myBookings.map((b: any) => (
                   <div key={b.id} className="rounded-2xl border bg-card p-4">
                     <div className="flex items-center justify-between gap-4">
                       <div>
-                        <p className="font-medium text-card-foreground">{b.workers?.profiles?.full_name || "Worker"} · {b.workers?.profession}</p>
+                        <p className="font-medium text-card-foreground">{b.workers?.profiles?.full_name || "Service"} · {b.workers?.profession}</p>
                         <p className="mt-1 text-sm text-muted-foreground">{b.service_description}</p>
                         <div className="mt-2 flex items-center gap-3 text-xs text-muted-foreground">
                           <span className="flex items-center gap-1"><Calendar className="h-3 w-3" /> {new Date(b.booking_date).toLocaleDateString()}</span>
