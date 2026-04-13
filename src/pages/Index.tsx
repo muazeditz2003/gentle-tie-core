@@ -7,7 +7,6 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import WorkerCard from "@/components/WorkerCard";
 import NativeAdCard, { type NativeAd } from "@/components/NativeAdCard";
 import MonetizedWorkerGrid from "@/components/MonetizedWorkerGrid";
 import { serviceCategories } from "@/data/mockData";
@@ -37,6 +36,7 @@ const Index = () => {
   const [feedAds, setFeedAds] = useState<NativeAd[]>([]);
   const [bannerAds, setBannerAds] = useState<NativeAd[]>([]);
   const [adFrequency, setAdFrequency] = useState(5);
+  const [sponsoredServiceIds, setSponsoredServiceIds] = useState<string[]>([]);
   const { user, loading } = useAuth();
 
   useEffect(() => {
@@ -100,6 +100,7 @@ const Index = () => {
         const sponsored = mapped.filter((w) => sponsorIds.has(w.id)).sort(() => Math.random() - 0.5);
         const normal = mapped.filter((w) => !sponsorIds.has(w.id));
         setTopWorkers([...sponsored, ...normal]);
+        setSponsoredServiceIds(Array.from(sponsorIds));
 
         const ads = (adsRes.data || []) as NativeAd[];
         setFeedAds(ads.filter((a: any) => a.placement === "home_feed"));
@@ -231,7 +232,7 @@ const Index = () => {
             </div>
           ) : (
             <MonetizedWorkerGrid
-              workers={topWorkers.map((w) => ({ ...w, isSponsored: topWorkers[0] ? true && false : false }))}
+              workers={topWorkers.map((w) => ({ ...w, isSponsored: sponsoredServiceIds.includes(w.id) }))}
               ads={feedAds}
               adFrequencyMin={adFrequency}
             />

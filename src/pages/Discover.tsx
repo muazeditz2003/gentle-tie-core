@@ -4,7 +4,6 @@ import { Search, Map, List, MapPin, Navigation, SlidersHorizontal } from "lucide
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import WorkerCard from "@/components/WorkerCard";
 import MonetizedWorkerGrid from "@/components/MonetizedWorkerGrid";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
