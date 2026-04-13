@@ -5,14 +5,13 @@ import { Droplet, Search, MapPin, Phone, MessageSquare, Filter, Heart } from "lu
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
 import BloodRequestDialog from "@/components/BloodRequestDialog";
 import ActiveBloodRequests from "@/components/ActiveBloodRequests";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getCurrentPosition, calculateDistance, type Coords } from "@/lib/geolocation";
+import AppLayout from "@/components/AppLayout";
 
 const BLOOD_GROUPS = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
 
@@ -113,7 +112,6 @@ const BloodDonors = () => {
 
   if (authLoading) return (
     <div className="min-h-screen bg-background">
-      <Navbar />
       <div className="container mx-auto px-4 py-16 text-center">
         <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
       </div>
@@ -123,32 +121,32 @@ const BloodDonors = () => {
   if (!user) return null;
 
   return (
-    <div className="min-h-screen bg-background">
-      <Navbar />
-
-      {/* Hero */}
-      <section className="relative overflow-hidden border-b bg-gradient-to-b from-red-50/60 to-background dark:from-red-950/20">
+    <AppLayout
+      title="Urgent Requests"
+      subtitle="Respond to nearby blood donation requests quickly and safely."
+      action={<BloodRequestDialog />}
+    >
+      <section className="relative overflow-hidden rounded-2xl border bg-gradient-to-b from-destructive/5 to-background">
         <div className="absolute -top-32 -right-32 w-[400px] h-[400px] rounded-full bg-red-500/5 blur-3xl" />
-        <div className="container mx-auto px-4 pt-10 pb-10">
+        <div className="px-4 pb-6 pt-6">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
             <div className="flex items-center gap-2 mb-2">
-              <Heart className="w-6 h-6 text-red-500" />
-              <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight text-foreground">Blood Donors</h1>
+              <Heart className="w-6 h-6 text-destructive" />
+              <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight text-foreground">Blood Help Network</h1>
             </div>
             <p className="text-muted-foreground mb-6 max-w-lg">
               Find willing blood donors in your area. Every drop counts — connect with someone who can help save a life.
             </p>
-            <BloodRequestDialog />
           </motion.div>
 
           {/* Stats */}
           <div className="flex gap-4 mb-6">
             <div className="bg-card border rounded-xl px-5 py-3 text-center">
-              <p className="text-2xl font-bold text-red-500">{stats.total}</p>
+              <p className="text-2xl font-bold text-destructive">{stats.total}</p>
               <p className="text-xs text-muted-foreground">Total Donors</p>
             </div>
             <div className="bg-card border rounded-xl px-5 py-3 text-center">
-              <p className="text-2xl font-bold text-green-500">{stats.active}</p>
+              <p className="text-2xl font-bold text-success">{stats.active}</p>
               <p className="text-xs text-muted-foreground">Active Now</p>
             </div>
           </div>
@@ -168,8 +166,7 @@ const BloodDonors = () => {
         </div>
       </section>
 
-      {/* Filters */}
-      <div className="container mx-auto px-4 py-6">
+      <div className="py-6">
         <div className="flex flex-wrap items-center gap-3 mb-6">
           <div className="flex items-center gap-2">
             <Filter className="w-4 h-4 text-muted-foreground" />
@@ -180,7 +177,7 @@ const BloodDonors = () => {
           <div className="flex flex-wrap gap-1.5">
             <Badge
               variant={selectedGroup === "" ? "default" : "outline"}
-              className={`cursor-pointer px-3 py-1 rounded-full text-sm ${selectedGroup === "" ? "bg-red-500 text-white hover:bg-red-600" : "hover:bg-red-50"}`}
+              className="cursor-pointer rounded-full px-3 py-1 text-sm"
               onClick={() => setSelectedGroup("")}
             >
               All Groups
@@ -189,7 +186,7 @@ const BloodDonors = () => {
               <Badge
                 key={bg}
                 variant={selectedGroup === bg ? "default" : "outline"}
-                className={`cursor-pointer px-3 py-1 rounded-full text-sm ${selectedGroup === bg ? "bg-red-500 text-white hover:bg-red-600" : "hover:bg-red-50"}`}
+                className="cursor-pointer rounded-full px-3 py-1 text-sm"
                 onClick={() => setSelectedGroup(bg === selectedGroup ? "" : bg)}
               >
                 {bg}
@@ -202,7 +199,7 @@ const BloodDonors = () => {
             variant={activeOnly ? "default" : "outline"}
             size="sm"
             onClick={() => setActiveOnly(!activeOnly)}
-            className={`rounded-full ${activeOnly ? "bg-green-500 hover:bg-green-600 text-white" : ""}`}
+            className="rounded-full"
           >
             <Droplet className="w-3 h-3 mr-1" />
             Active Only
@@ -269,7 +266,7 @@ const BloodDonors = () => {
                       className="flex-1 gap-1.5 rounded-xl"
                       onClick={() => navigate(`/chat/${donor.user_id}`)}
                     >
-                      <MessageSquare className="w-3.5 h-3.5" /> Message
+                      <MessageSquare className="w-3.5 h-3.5" /> Help Now
                     </Button>
                     {donor.phone && (
                       <Button
@@ -295,11 +292,8 @@ const BloodDonors = () => {
         )}
       </div>
 
-      {/* Active Blood Requests */}
       <ActiveBloodRequests />
-
-      <Footer />
-    </div>
+    </AppLayout>
   );
 };
 

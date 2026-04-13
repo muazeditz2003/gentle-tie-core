@@ -56,13 +56,13 @@ const Messages = () => {
     enabled: !!user,
   });
 
-  if (loading) return null;
-
   const filteredConversations = useMemo(() => {
     if (!search.trim()) return conversations;
     const q = search.toLowerCase();
     return conversations.filter((c: any) => c.name.toLowerCase().includes(q) || c.lastMessage.toLowerCase().includes(q));
   }, [conversations, search]);
+
+  if (loading) return null;
 
   return (
     <AppLayout title="Messages" subtitle="Chat with nearby helpers and confirm work quickly.">

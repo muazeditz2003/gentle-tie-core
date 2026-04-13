@@ -1,12 +1,10 @@
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowLeft, CheckCircle, MapPin, Phone, Star, Briefcase, MessageSquare, CalendarPlus } from "lucide-react";
+import { ArrowLeft, CheckCircle, Clock3, MapPin, Phone, ShieldCheck, Star, Briefcase, MessageSquare, CalendarPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
 import StarRating from "@/components/StarRating";
 import BookingDialog from "@/components/BookingDialog";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -14,6 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useState } from "react";
 import { toast } from "sonner";
+import AppLayout from "@/components/AppLayout";
 
 const WorkerProfile = () => {
   const { id } = useParams();
@@ -55,7 +54,6 @@ const WorkerProfile = () => {
   if (!dbWorker) {
     return (
       <div className="min-h-screen bg-background">
-        <Navbar />
         <div className="container mx-auto px-4 py-16 text-center">
           <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
         </div>
@@ -110,14 +108,13 @@ const WorkerProfile = () => {
   const initials = worker.name.split(" ").map(n => n[0]).join("");
 
   return (
-    <div className="min-h-screen bg-background">
-      <Navbar />
-      <div className="container mx-auto px-4 py-8 max-w-3xl">
+    <AppLayout title="Worker Profile" subtitle="Trust signals, reviews, and quick hiring in one place.">
+      <div className="mx-auto max-w-3xl">
         <Link to="/discover" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-primary mb-6">
           <ArrowLeft className="w-4 h-4" /> Back to search
         </Link>
 
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-card border rounded-2xl p-6 md:p-8">
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-card border rounded-2xl p-6 md:p-8 pb-24 md:pb-8">
           <div className="flex flex-col sm:flex-row gap-6 items-start">
             {worker.profilePhoto ? (
               <img src={worker.profilePhoto} alt={worker.name} className="w-24 h-24 rounded-2xl object-cover shrink-0" />
@@ -145,10 +142,24 @@ const WorkerProfile = () => {
                   {worker.available ? "Available Now" : "Currently Busy"}
                 </Badge>
               </div>
+              <div className="mt-4 grid grid-cols-3 gap-2 text-xs">
+                <div className="rounded-xl bg-muted p-2 text-center">
+                  <ShieldCheck className="mx-auto mb-1 h-4 w-4 text-primary" />
+                  Trust Verified
+                </div>
+                <div className="rounded-xl bg-muted p-2 text-center">
+                  <Clock3 className="mx-auto mb-1 h-4 w-4 text-secondary" />
+                  Replies fast
+                </div>
+                <div className="rounded-xl bg-muted p-2 text-center">
+                  <MapPin className="mx-auto mb-1 h-4 w-4 text-warning" />
+                  Local expert
+                </div>
+              </div>
             </div>
           </div>
 
-          <div className="flex gap-3 mt-6 flex-wrap">
+          <div className="mt-6 hidden gap-3 md:flex md:flex-wrap">
             <Button variant="hero" className="flex-1 gap-2" asChild>
               <a href={`tel:${worker.phone}`}><Phone className="w-4 h-4" /> Call Now</a>
             </Button>
@@ -217,9 +228,23 @@ const WorkerProfile = () => {
             )}
           </div>
         </motion.div>
+
+        <div className="fixed inset-x-0 bottom-20 z-40 px-4 md:hidden">
+          <div className="mx-auto grid max-w-md grid-cols-2 gap-2 rounded-2xl border bg-card/95 p-2 shadow-premium backdrop-blur-xl">
+            <Button variant="outline" className="rounded-xl" onClick={handleMessage}>
+              <MessageSquare className="mr-1 h-4 w-4" /> Message
+            </Button>
+            {user ? (
+              <BookingDialog workerId={worker.id} workerName={worker.name}>
+                <Button className="w-full rounded-xl">Hire Now</Button>
+              </BookingDialog>
+            ) : (
+              <Button className="rounded-xl" onClick={() => navigate("/login")}>Hire Now</Button>
+            )}
+          </div>
+        </div>
       </div>
-      <Footer />
-    </div>
+    </AppLayout>
   );
 };
 
