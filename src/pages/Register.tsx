@@ -25,7 +25,6 @@ const Register = () => {
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [city, setCity] = useState("");
   const [profession, setProfession] = useState("");
   const [experience, setExperience] = useState("");
   const [bloodGroup, setBloodGroup] = useState("");
@@ -175,10 +174,6 @@ const Register = () => {
                 </button>
               </div>
               <PasswordStrength password={password} />
-            </div>
-            <div>
-              <Label htmlFor="city">{t("register.city")}</Label>
-              <Input id="city" placeholder="e.g. Lahore" className="mt-1.5" value={city} onChange={e => setCity(e.target.value)} />
             </div>
             <div>
               <Label htmlFor="bloodGroup">Blood Group</Label>
