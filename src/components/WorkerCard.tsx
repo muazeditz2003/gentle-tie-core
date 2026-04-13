@@ -23,7 +23,7 @@ const WorkerCard = ({ worker, index = 0 }: Props) => {
     >
       <Link
         to={`/worker/${worker.id}`}
-        className="block p-5 rounded-2xl bg-card border hover:border-primary/30 hover:shadow-premium transition-all duration-300 group"
+        className="tap-feedback block p-4 md:p-5 rounded-2xl bg-card border hover:border-primary/30 hover:shadow-premium hover:-translate-y-0.5 transition-all duration-300 group"
       >
         <div className="flex gap-4">
           <Avatar className="w-14 h-14 rounded-xl border-2 border-border group-hover:border-primary/30 transition-colors">
@@ -40,6 +40,7 @@ const WorkerCard = ({ worker, index = 0 }: Props) => {
               )}
             </div>
             <p className="text-sm text-muted-foreground">{worker.profession}</p>
+            <p className="text-xs font-semibold text-primary mt-1">Starting from PKR 1,500</p>
             <div className="flex items-center gap-3 mt-2.5 text-xs text-muted-foreground flex-wrap">
               <span className="flex items-center gap-1 px-2 py-0.5 bg-star/10 rounded-full">
                 <Star className="w-3 h-3 text-star fill-star" />
