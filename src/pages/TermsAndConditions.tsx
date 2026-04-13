@@ -31,10 +31,10 @@ const TermsAndConditions = () => (
         <p>You are responsible for maintaining the confidentiality of your account credentials. You agree to provide accurate and complete information during registration and to keep your profile information up to date.</p>
 
         <h2 className="text-lg font-semibold text-foreground">4. User Conduct</h2>
-        <p>You agree not to use the platform for any unlawful purpose, harass other users, post false or misleading information, or engage in any activity that could damage the platform or its reputation.</p>
+        <p>You agree not to use the platform for any unlawful purpose, harass other clients, post false or misleading information, or engage in any activity that could damage the platform or its reputation.</p>
 
         <h2 className="text-lg font-semibold text-foreground">5. Reviews and Ratings</h2>
-        <p>Users may leave reviews and ratings for workers. Reviews must be honest, fair, and based on genuine experience. We reserve the right to remove reviews that violate our guidelines.</p>
+        <p>Clients may leave reviews and ratings for services. Reviews must be honest, fair, and based on genuine experience. We reserve the right to remove reviews that violate our guidelines.</p>
 
         <h2 className="text-lg font-semibold text-foreground">6. Limitation of Liability</h2>
         <p>NearConnect shall not be liable for any indirect, incidental, special, consequential, or punitive damages resulting from your use of or inability to use the platform.</p>

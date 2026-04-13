@@ -60,7 +60,7 @@ export const en: TranslationKeys = {
   "register.submit": "Create Account",
   "register.submitting": "Creating account...",
   "register.hasAccount": "Already have an account?",
-  "register.customer": "User",
+  "register.customer": "Client",
   "register.worker": "Service",
 
   "discover.title": "Find Services",
@@ -100,7 +100,7 @@ export const en: TranslationKeys = {
   "workerDash.title": "Service Dashboard",
   "workerDash.status": "Status",
   "workerDash.availability": "Availability",
-  "workerDash.visibleToCustomers": "You're visible to users",
+  "workerDash.visibleToCustomers": "You're visible to clients",
   "workerDash.hiddenFromSearch": "You're hidden from search",
   "workerDash.saveChanges": "Save Changes",
   "workerDash.updateLocation": "Update Location",
