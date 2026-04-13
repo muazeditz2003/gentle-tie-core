@@ -158,9 +158,17 @@ const WorkerProfile = () => {
           </div>
 
           <div className="mt-6 hidden gap-3 md:flex md:flex-wrap">
-             <Button variant="hero" className="flex-1 gap-2" asChild>
-              <a href={`tel:${worker.phone}`}><Phone className="w-4 h-4" /> Call Now</a>
-            </Button>
+             {user ? (
+               <Button variant="hero" className="flex-1 gap-2" asChild>
+                 <a href={`tel:${worker.phone}`}><Phone className="w-4 h-4" /> Call Now</a>
+               </Button>
+             ) : (
+               <AuthRequiredDialog title="Log in to contact" description="Please log in or sign up to contact this service.">
+                 <Button variant="hero" className="flex-1 gap-2">
+                   <Phone className="w-4 h-4" /> Contact
+                 </Button>
+               </AuthRequiredDialog>
+             )}
              {user ? (
                <Button variant="outline" className="flex-1 gap-2" onClick={handleMessage}>
                  <MessageSquare className="w-4 h-4" /> Contact
@@ -250,10 +258,12 @@ const WorkerProfile = () => {
             )}
             {user ? (
               <BookingDialog workerId={worker.id} workerName={worker.name}>
-                <Button className="w-full rounded-xl">Hire Now</Button>
+                <Button className="w-full rounded-xl">Book Now</Button>
               </BookingDialog>
             ) : (
-              <Button className="rounded-xl" onClick={() => navigate("/login")}>Hire Now</Button>
+              <AuthRequiredDialog title="Log in to book" description="Please log in or sign up to book this service.">
+                <Button className="rounded-xl">Book Now</Button>
+              </AuthRequiredDialog>
             )}
           </div>
         </div>
