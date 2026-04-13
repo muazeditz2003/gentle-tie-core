@@ -42,13 +42,13 @@ const WelcomeBanner = ({ firstName }: { firstName: string }) => {
               Hey {firstName}, glad to have you here! 🎉
             </h2>
             <p className="text-primary-foreground/80 mb-5 max-w-lg text-sm">
-              Here's how to get started — find a professional, chat directly, and get the job done.
+              Here's how to get started — find a service, chat directly, and get the job done.
             </p>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-5">
               {[
-                { icon: Search, title: "Find Workers", desc: "Search by service or location" },
-                { icon: MessageCircle, title: "Chat & Book", desc: "Message workers directly" },
+                { icon: Search, title: "Find Services", desc: "Search by service or location" },
+                { icon: MessageCircle, title: "Chat & Book", desc: "Message services directly" },
                 { icon: Star, title: "Rate & Review", desc: "Share your experience" },
               ].map((step, i) => (
                 <div key={i} className="flex items-start gap-3 bg-primary-foreground/10 rounded-xl p-3">
@@ -67,7 +67,7 @@ const WelcomeBanner = ({ firstName }: { firstName: string }) => {
                 onClick={() => { dismiss(); navigate("/discover"); }}
                 className="bg-primary-foreground text-primary hover:bg-primary-foreground/90 rounded-xl font-semibold"
               >
-                Explore Workers
+                Explore Services
               </Button>
               <Button
                 size="sm"

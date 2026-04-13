@@ -374,7 +374,7 @@ const WorkerDashboard = () => {
               <div className="mt-4 flex items-center justify-between rounded-xl bg-muted p-3">
                 <div>
                   <p className="text-sm font-medium text-foreground">Availability</p>
-                  <p className="text-xs text-muted-foreground">{available ? "You are visible to customers" : "You are hidden from search"}</p>
+                  <p className="text-xs text-muted-foreground">{available ? "You are visible to users" : "You are hidden from search"}</p>
                 </div>
                 <Switch checked={available} onCheckedChange={setAvailable} />
               </div>
@@ -437,7 +437,7 @@ const WorkerDashboard = () => {
                     <div key={b.id} className="rounded-xl bg-muted/40 p-4">
                       <div className="flex items-center justify-between gap-3">
                         <div>
-                          <p className="font-medium text-card-foreground">{b.profiles?.full_name || "Customer"}</p>
+                          <p className="font-medium text-card-foreground">{b.profiles?.full_name || "User"}</p>
                           <p className="text-sm text-muted-foreground">{b.service_description}</p>
                         </div>
                         <Badge className={b.status === "confirmed" ? "bg-success text-success-foreground" : "bg-muted text-muted-foreground"}>{b.status}</Badge>
