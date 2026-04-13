@@ -124,8 +124,7 @@ const Index = () => {
     const sponsoredWorkers = topWorkers.filter((worker) => sponsoredServiceIds.includes(worker.id)).slice(0, 3);
     if (sponsoredWorkers.length > 0) return sponsoredWorkers;
 
-    const fallbackSource = topWorkers.length > 0 ? topWorkers : mockWorkers;
-    return fallbackSource.slice(0, 3);
+    return mockWorkers.slice(0, 3);
   }, [topWorkers, sponsoredServiceIds]);
 
   const nearbyWorkers = useMemo(() => {
@@ -186,7 +185,7 @@ const Index = () => {
             ))}
           </div>
 
-          <div className="rounded-2xl border border-primary/20 bg-muted/40 p-4">
+          <div className="rounded-2xl border border-primary/20 border-red-500 bg-muted/40 p-4">
             <div className="grid gap-4 md:grid-cols-[1.4fr,1fr] md:items-center">
               <div>
                 <p className="text-lg font-semibold text-foreground">{bannerAd.title}</p>
