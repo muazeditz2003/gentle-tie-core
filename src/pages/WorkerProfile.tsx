@@ -10,7 +10,7 @@ import BookingDialog from "@/components/BookingDialog";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import AppLayout from "@/components/AppLayout";
 import AuthRequiredDialog from "@/components/AuthRequiredDialog";
@@ -26,12 +26,12 @@ const WorkerProfile = () => {
 
   const trackEvent = async (eventType: "profile_view" | "contact_click" | "conversion") => {
     if (!id || !dbWorker) return;
-    await supabase.from("service_analytics_events").insert({
+    await (supabase as any).from("service_analytics_events").insert({
       service_id: id,
       owner_user_id: dbWorker.user_id,
       event_type: eventType,
       source: "app",
-    } as any);
+    });
   };
 
   const { data: dbWorker } = useQuery({
@@ -115,7 +115,9 @@ const WorkerProfile = () => {
 
   const initials = worker.name.split(" ").map(n => n[0]).join("");
 
-  void trackEvent("profile_view");
+  useEffect(() => {
+    void trackEvent("profile_view");
+  }, [id, dbWorker?.user_id]);
 
   return (
     <AppLayout title="Service Profile" subtitle="Trust signals, reviews, and quick booking in one place.">
