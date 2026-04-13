@@ -5,6 +5,7 @@ import { ArrowRight, Compass, HeartPulse, MessageSquare, Search, ShieldCheck, Sp
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import WorkerCard from "@/components/WorkerCard";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import NativeAdCard, { type NativeAd } from "@/components/NativeAdCard";
