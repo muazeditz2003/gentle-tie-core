@@ -101,7 +101,8 @@ const Register = () => {
       }
       return;
     }
-    const redirect = searchParams.get("redirect") || "/";
+    const defaultRedirect = role === "worker" ? "/worker-dashboard" : "/dashboard";
+    const redirect = searchParams.get("redirect") || defaultRedirect;
 
     if (data.session) {
       toast.success("Account created successfully!");
@@ -109,7 +110,7 @@ const Register = () => {
       return;
     }
     toast.success("Account created! Check your email to confirm.");
-    navigate("/login", { replace: true });
+    navigate(`/login?redirect=${encodeURIComponent(redirect)}`, { replace: true });
   };
 
   return (
