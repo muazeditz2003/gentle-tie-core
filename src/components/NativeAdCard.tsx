@@ -19,7 +19,7 @@ const NativeAdCard = ({ ad }: NativeAdCardProps) => {
   const isPlaceholder = ad.id === "placeholder-ad";
 
   return (
-    <article className="rounded-2xl border border-primary/25 border-blue-500 bg-card p-3 md:p-4">
+    <article className="rounded-2xl border border-[hsl(var(--secondary))] border-primary/25 bg-card p-3 md:p-4">
       {ad.image_url ? (
         <img
           src={ad.image_url}
