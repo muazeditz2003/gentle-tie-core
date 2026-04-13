@@ -27,14 +27,12 @@ const Navbar = () => {
   };
 
   return (
-    <nav className="sticky top-0 z-50 glass-strong">
+    <nav className="sticky top-0 z-50 border-b border-border/70 bg-card/90 backdrop-blur-xl">
       <div className="container mx-auto flex items-center justify-between h-16 px-4">
-        {/* Center: Logo */}
-        <Link to="/" className="absolute left-1/2 -translate-x-1/2 flex items-center">
-          <img src={logoImg} alt="Near Konnect" className="h-11 object-contain" />
+        <Link to="/" className="flex items-center">
+          <img src={logoImg} alt="Near Konnect" className="h-9 object-contain" />
         </Link>
 
-        {/* Left: spacer for mobile */}
         <div className="hidden md:flex items-center gap-1 min-w-[220px]">
           {user && (
             <>
@@ -81,7 +79,6 @@ const Navbar = () => {
           )}
         </div>
 
-        {/* Mobile hamburger */}
         <button className="md:hidden ml-auto flex items-center gap-2" onClick={() => setOpen(!open)}>
           {user && <NotificationBell />}
           {open ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
