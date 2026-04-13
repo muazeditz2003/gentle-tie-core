@@ -9,10 +9,12 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { serviceCategories as mockCategories } from "@/data/mockData";
-import { getCurrentPosition, calculateDistance, type Coords } from "@/lib/geolocation";
+import { calculateDistance } from "@/lib/geolocation";
 import AppLayout from "@/components/AppLayout";
+import { useRealtimeLocation } from "@/hooks/useRealtimeLocation";
 
 type SortKey = "distance" | "rating" | "experience" | "price";
+const MAX_RADIUS_KM = 20;
 
 const Discover = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -23,9 +25,8 @@ const Discover = () => {
   const [priceBand, setPriceBand] = useState<"all" | "budget" | "mid" | "premium">("all");
   const [minRating, setMinRating] = useState(0);
   const selectedCategory = searchParams.get("category") || "";
-  const [userCoords, setUserCoords] = useState<Coords | null>(null);
-  const [detectingLocation, setDetectingLocation] = useState(false);
   const [showMapView, setShowMapView] = useState(false);
+  const { coords: userCoords, status: locationStatus, refresh: refreshLocation } = useRealtimeLocation();
 
   const { data: monetization } = useQuery({
     queryKey: ["discover_monetization"],
@@ -47,21 +48,6 @@ const Discover = () => {
       };
     },
   });
-
-  useEffect(() => {
-    detectLocation();
-  }, []);
-
-  const detectLocation = async () => {
-    setDetectingLocation(true);
-    try {
-      const coords = await getCurrentPosition();
-      setUserCoords(coords);
-    } catch {
-      setUserCoords({ latitude: 31.5204, longitude: 74.3587 });
-    }
-    setDetectingLocation(false);
-  };
 
   const { data: dbWorkers = [] } = useQuery({
     queryKey: ["workers"],
@@ -168,11 +154,15 @@ const Discover = () => {
       list = list.filter(w => {
         const name = w.name.toLowerCase();
         const prof = w.profession.toLowerCase();
-        const city = w.city.toLowerCase();
         return words.every(
-          word => name.includes(word) || prof.includes(word) || city.includes(word)
+          word => name.includes(word) || prof.includes(word)
         );
       });
+    }
+    if (userCoords) {
+      list = list
+        .filter((w) => w.distance > 0 && w.distance <= MAX_RADIUS_KM)
+        .sort((a, b) => a.distance - b.distance);
     }
     list.sort((a, b) => {
       if (sort === "distance") return a.distance - b.distance;
@@ -231,13 +221,15 @@ const Discover = () => {
         <div className="rounded-2xl border bg-muted/40 p-3">
           <div className="mb-3 flex items-center gap-2 text-xs text-muted-foreground">
             <MapPin className="h-3.5 w-3.5" />
-            {userCoords ? (
-              <span>Using your location ({userCoords.latitude.toFixed(2)}, {userCoords.longitude.toFixed(2)})</span>
+            {locationStatus === "denied" ? (
+              <span>Please enable location to continue</span>
+            ) : userCoords ? (
+              <span>Using your current location ({userCoords.latitude.toFixed(2)}, {userCoords.longitude.toFixed(2)})</span>
             ) : (
-              <span>Location unavailable</span>
+              <span>Detecting current location...</span>
             )}
-            <Button variant="ghost" size="sm" onClick={detectLocation} disabled={detectingLocation} className="h-6 gap-1 px-2 text-[11px]">
-              <Navigation className="h-3 w-3" /> {detectingLocation ? "Detecting..." : "Refresh"}
+            <Button variant="ghost" size="sm" onClick={refreshLocation} className="h-6 gap-1 px-2 text-[11px]">
+              <Navigation className="h-3 w-3" /> Update my location
             </Button>
           </div>
 
@@ -306,7 +298,15 @@ const Discover = () => {
           <div className="rounded-2xl border bg-card p-12 text-center">
             <Map className="mx-auto mb-2 h-9 w-9 text-primary" />
             <p className="font-semibold text-card-foreground">Map view</p>
-            <p className="text-sm text-muted-foreground">Pin-based browsing can be connected next.</p>
+            <p className="text-sm text-muted-foreground">Nearby workers (simulated pins within {MAX_RADIUS_KM} km)</p>
+            <div className="mx-auto mt-4 max-w-md space-y-2 text-left">
+              {sorted.slice(0, 6).map((worker) => (
+                <div key={`map-pin-${worker.id}`} className="flex items-center justify-between rounded-xl border bg-muted/40 px-3 py-2 text-xs">
+                  <span className="font-medium text-foreground">📍 {worker.name}</span>
+                  <span className="text-muted-foreground">{worker.distance.toFixed(1)} km away</span>
+                </div>
+              ))}
+            </div>
           </div>
         ) : (
           <MonetizedWorkerGrid

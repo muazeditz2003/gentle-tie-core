@@ -43,19 +43,15 @@ const WorkerDashboard = () => {
   const [profession, setProfession] = useState("");
   const [experience, setExperience] = useState("");
   const [description, setDescription] = useState("");
-  const [city, setCity] = useState("");
-  const [serviceAreas, setServiceAreas] = useState("");
   const [available, setAvailable] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [updatingLocation, setUpdatingLocation] = useState(false);
+  const [settingLocation, setSettingLocation] = useState(false);
 
   useEffect(() => {
     if (workerData) {
       setProfession(workerData.profession || "");
       setExperience(String(workerData.experience || 0));
       setDescription(workerData.description || "");
-      setCity((workerData as any).profiles?.city || workerData.city || "");
-      setServiceAreas((workerData.service_areas || []).join(", "));
       setAvailable(workerData.available);
     }
   }, [workerData]);
@@ -163,10 +159,6 @@ const WorkerDashboard = () => {
   const handleSave = async () => {
     if (!workerData) return;
     setSaving(true);
-    const areas = serviceAreas
-      .split(",")
-      .map((s) => s.trim())
-      .filter(Boolean);
 
     const { error: workerError } = await supabase
       .from("workers")
@@ -174,19 +166,12 @@ const WorkerDashboard = () => {
         profession,
         experience: parseInt(experience) || 0,
         description,
-        city,
-        service_areas: areas,
         available,
       })
       .eq("id", workerData.id);
 
-    const { error: profileError } = await supabase
-      .from("profiles")
-      .update({ city })
-      .eq("user_id", user!.id);
-
     setSaving(false);
-    if (workerError || profileError) {
+    if (workerError) {
       toast.error("Failed to save changes");
     } else {
       toast.success("Profile updated!");
@@ -194,21 +179,25 @@ const WorkerDashboard = () => {
     }
   };
 
-  const handleUpdateLocation = async () => {
+  const handleSetFixedLocation = async () => {
     if (!workerData) return;
-    setUpdatingLocation(true);
+    if (workerData.latitude && workerData.longitude) {
+      toast.error("Service location is already fixed.");
+      return;
+    }
+    setSettingLocation(true);
     try {
       const coords = await getCurrentPosition();
       await supabase
         .from("workers")
         .update({ latitude: coords.latitude, longitude: coords.longitude })
         .eq("id", workerData.id);
-      toast.success("Location updated!");
+      toast.success("Fixed service location saved!");
       queryClient.invalidateQueries({ queryKey: ["my_worker_profile"] });
     } catch {
       toast.error("Could not get location. Please enable location access.");
     }
-    setUpdatingLocation(false);
+    setSettingLocation(false);
   };
 
   const handleAvatarUpload = async (url: string) => {
@@ -361,14 +350,6 @@ const WorkerDashboard = () => {
                   <Label>About</Label>
                   <Textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={3} className="mt-1.5" />
                 </div>
-                <div>
-                  <Label>City</Label>
-                  <Input value={city} onChange={(e) => setCity(e.target.value)} className="mt-1.5" />
-                </div>
-                <div>
-                  <Label>Service Areas (comma-separated)</Label>
-                  <Input value={serviceAreas} onChange={(e) => setServiceAreas(e.target.value)} className="mt-1.5" />
-                </div>
               </div>
 
               <div className="mt-4 flex items-center justify-between rounded-xl bg-muted p-3">
@@ -383,16 +364,31 @@ const WorkerDashboard = () => {
                 <Button onClick={handleSave} disabled={saving} className="gap-2">
                   <Save className="h-4 w-4" /> {saving ? "Saving..." : "Save changes"}
                 </Button>
-                <Button variant="outline" onClick={handleUpdateLocation} disabled={updatingLocation} className="gap-2">
-                  <Navigation className="h-4 w-4" /> {updatingLocation ? "Updating..." : "Update location"}
+                <Button
+                  variant="outline"
+                  onClick={handleSetFixedLocation}
+                  disabled={settingLocation || !!(workerData.latitude && workerData.longitude)}
+                  className="gap-2"
+                >
+                  <Navigation className="h-4 w-4" />
+                  {workerData.latitude && workerData.longitude
+                    ? "Fixed service location saved"
+                    : settingLocation
+                    ? "Detecting..."
+                    : "Use current location as fixed service location"}
                 </Button>
               </div>
 
-              {workerData.latitude && workerData.longitude && (
-                <p className="mt-3 flex items-center gap-1 text-xs text-muted-foreground">
-                  <MapPin className="h-3 w-3" /> {workerData.latitude.toFixed(4)}, {workerData.longitude.toFixed(4)}
-                </p>
-              )}
+              <div className="mt-3 rounded-xl border bg-muted/40 p-3 text-xs text-muted-foreground">
+                <p className="font-medium text-foreground">Location mode: Using your service location</p>
+                {workerData.latitude && workerData.longitude ? (
+                  <p className="mt-1 flex items-center gap-1">
+                    <MapPin className="h-3 w-3" /> {workerData.latitude.toFixed(4)}, {workerData.longitude.toFixed(4)}
+                  </p>
+                ) : (
+                  <p className="mt-1">Set your fixed service location to appear in nearby results.</p>
+                )}
+              </div>
             </div>
           </TabsContent>
 

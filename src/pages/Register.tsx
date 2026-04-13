@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useSearchParams, useNavigate } from "react-router-dom";
-import { Mail, Lock, User, Phone, Eye, EyeOff } from "lucide-react";
+import { Mail, Lock, User, Phone, Eye, EyeOff, Navigation } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,6 +10,7 @@ import PasswordStrength from "@/components/PasswordStrength";
 import { validatePassword } from "@/lib/passwordValidation";
 import { useI18n } from "@/i18n";
 import logoImg from "@/assets/logo.png";
+import { getCurrentPosition, type Coords } from "@/lib/geolocation";
 
 const Register = () => {
   const navigate = useNavigate();
@@ -24,24 +25,33 @@ const Register = () => {
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [city, setCity] = useState("");
   const [profession, setProfession] = useState("");
   const [experience, setExperience] = useState("");
-  const [address, setAddress] = useState("");
-  const [serviceArea, setServiceArea] = useState("");
   const [bloodGroup, setBloodGroup] = useState("");
   const [willingToDonate, setWillingToDonate] = useState(false);
+  const [workerCoords, setWorkerCoords] = useState<Coords | null>(null);
+  const [capturingLocation, setCapturingLocation] = useState(false);
+
+  const handleCaptureWorkerLocation = async () => {
+    setCapturingLocation(true);
+    try {
+      const coords = await getCurrentPosition();
+      setWorkerCoords(coords);
+      toast.success("Service location saved.");
+    } catch {
+      toast.error("Please enable location access to continue.");
+    } finally {
+      setCapturingLocation(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const normalizedName = name.trim();
     const normalizedEmail = email.trim().toLowerCase();
     const normalizedPhone = phone.trim();
-    const normalizedCity = city.trim();
     const normalizedProfession = profession.trim();
     const normalizedExperience = experience.trim();
-    const normalizedAddress = address.trim();
-    const normalizedServiceArea = serviceArea.split(",").map(i => i.trim()).filter(Boolean).join(", ");
 
     if (!normalizedName || !normalizedEmail || !password) {
       toast.error("Please fill in all required fields.");
@@ -56,14 +66,24 @@ const Register = () => {
       toast.error("Please fill in profession and experience.");
       return;
     }
+    if (role === "worker" && !workerCoords) {
+      toast.error("Use your current location as your fixed service location.");
+      return;
+    }
 
     setLoading(true);
-    const metadata: Record<string, string> = { full_name: normalizedName, phone: normalizedPhone, role, city: normalizedCity, blood_group: bloodGroup, is_blood_donor: willingToDonate ? "true" : "false" };
+    const metadata: Record<string, string> = {
+      full_name: normalizedName,
+      phone: normalizedPhone,
+      role,
+      blood_group: bloodGroup,
+      is_blood_donor: willingToDonate ? "true" : "false",
+    };
     if (role === "worker") {
       metadata.profession = normalizedProfession;
       metadata.experience = normalizedExperience;
-      metadata.address = normalizedAddress;
-      metadata.service_area = normalizedServiceArea;
+      metadata.latitude = String(workerCoords?.latitude ?? "");
+      metadata.longitude = String(workerCoords?.longitude ?? "");
     }
 
     const { data, error } = await supabase.auth.signUp({
@@ -156,10 +176,6 @@ const Register = () => {
               <PasswordStrength password={password} />
             </div>
             <div>
-              <Label htmlFor="city">{t("register.city")}</Label>
-              <Input id="city" placeholder="e.g. Lahore" className="mt-1.5" value={city} onChange={e => setCity(e.target.value)} />
-            </div>
-            <div>
               <Label htmlFor="bloodGroup">Blood Group</Label>
               <select id="bloodGroup" value={bloodGroup} onChange={e => setBloodGroup(e.target.value)} className="mt-1.5 w-full h-10 rounded-md border border-input bg-background px-3 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
                 <option value="">Select blood group</option>
@@ -191,13 +207,16 @@ const Register = () => {
                   <Label htmlFor="experience">{t("register.experience")} *</Label>
                   <Input id="experience" type="number" placeholder="e.g. 5" className="mt-1.5" value={experience} onChange={e => setExperience(e.target.value)} />
                 </div>
-                <div>
-                  <Label htmlFor="address">{t("register.address")}</Label>
-                  <Input id="address" placeholder={t("register.address")} className="mt-1.5" value={address} onChange={e => setAddress(e.target.value)} />
-                </div>
-                <div>
-                  <Label htmlFor="serviceArea">{t("register.serviceAreas")}</Label>
-                  <Input id="serviceArea" placeholder="DHA, Gulberg, Model Town" className="mt-1.5" value={serviceArea} onChange={e => setServiceArea(e.target.value)} />
+                <div className="rounded-xl border bg-muted/40 p-3">
+                  <p className="text-sm font-medium text-foreground">Use your current location as your service location?</p>
+                  <p className="mt-1 text-xs text-muted-foreground">This fixed location is used for nearby matching and cannot be changed frequently.</p>
+                  <Button type="button" variant="outline" className="mt-3 w-full gap-2" onClick={handleCaptureWorkerLocation} disabled={capturingLocation || !!workerCoords}>
+                    <Navigation className="h-4 w-4" />
+                    {workerCoords ? "Service location saved" : capturingLocation ? "Detecting location..." : "Use my current location"}
+                  </Button>
+                  {workerCoords && (
+                    <p className="mt-2 text-xs text-muted-foreground">{workerCoords.latitude.toFixed(5)}, {workerCoords.longitude.toFixed(5)}</p>
+                  )}
                 </div>
               </>
             )}

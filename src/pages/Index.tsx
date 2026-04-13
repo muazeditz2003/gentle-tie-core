@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import { ArrowRight, Compass, HeartPulse, MessageSquare, Search, ShieldCheck, Sparkles, Users } from "lucide-react";
+import { ArrowRight, Compass, HeartPulse, MapPin, MessageSquare, Navigation, Search, ShieldCheck, Sparkles, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -15,6 +15,8 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Worker } from "@/data/mockData";
 import { useAuth } from "@/contexts/AuthContext";
 import Home from "@/pages/Home";
+import { calculateDistance } from "@/lib/geolocation";
+import { useRealtimeLocation } from "@/hooks/useRealtimeLocation";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 18 },
@@ -46,6 +48,7 @@ const placeholderBannerAd: NativeAd = {
   cta_label: "Get Started",
   cta_url: "#",
 };
+const MAX_RADIUS_KM = 20;
 
 const Index = () => {
   const navigate = useNavigate();
@@ -57,6 +60,7 @@ const Index = () => {
   const adFrequency = 4;
   const [sponsoredServiceIds, setSponsoredServiceIds] = useState<string[]>([]);
   const { user, loading } = useAuth();
+  const { coords: browsingCoords, status: locationStatus, refresh: refreshLocation } = useRealtimeLocation();
 
   useEffect(() => {
     const fetchWorkers = async () => {
@@ -99,6 +103,8 @@ const Index = () => {
               serviceAreas: w.service_areas || [],
               profilePhoto: profile?.avatar_url || "",
               city: w.city || "",
+              latitude: w.latitude ?? undefined,
+              longitude: w.longitude ?? undefined,
             };
           });
 
@@ -128,13 +134,28 @@ const Index = () => {
   }, [topWorkers, sponsoredServiceIds]);
 
   const nearbyWorkers = useMemo(() => {
-    return topWorkers.length > 0 ? topWorkers : mockWorkers.slice(0, 6);
-  }, [topWorkers]);
+    const source = topWorkers.length > 0 ? topWorkers : mockWorkers.slice(0, 6);
+
+    if (!browsingCoords) {
+      return source.slice(0, 6).map((w) => ({ ...w, distance: 0 }));
+    }
+
+    return source
+      .map((w) => {
+        if (typeof w.latitude !== "number" || typeof w.longitude !== "number") {
+          return { ...w, distance: Number.POSITIVE_INFINITY };
+        }
+        const distance = calculateDistance(browsingCoords.latitude, browsingCoords.longitude, w.latitude, w.longitude);
+        return { ...w, distance: parseFloat(distance.toFixed(1)) };
+      })
+      .filter((w) => Number.isFinite(w.distance) && w.distance <= MAX_RADIUS_KM)
+      .sort((a, b) => a.distance - b.distance)
+      .slice(0, 6);
+  }, [topWorkers, browsingCoords]);
 
   const workerSuggestions = useMemo(() => {
-    const cities = [...new Set(topWorkers.map((w) => w.city).filter(Boolean))].slice(0, 2);
     const professions = [...new Set(topWorkers.map((w) => w.profession).filter(Boolean))].slice(0, 3);
-    return [...professions, ...cities];
+    return professions;
   }, [topWorkers]);
 
   useEffect(() => {
@@ -183,6 +204,20 @@ const Index = () => {
                 {suggestion}
               </button>
             ))}
+          </div>
+
+          <div className="mb-5 flex flex-wrap items-center gap-2 rounded-xl border bg-card p-2 text-xs text-muted-foreground">
+            <MapPin className="h-3.5 w-3.5" />
+            {locationStatus === "denied" ? (
+              <span>Please enable location to continue</span>
+            ) : browsingCoords ? (
+              <span>Using your current location ({browsingCoords.latitude.toFixed(2)}, {browsingCoords.longitude.toFixed(2)})</span>
+            ) : (
+              <span>Detecting current location...</span>
+            )}
+            <Button type="button" variant="ghost" size="sm" className="h-7 gap-1 px-2 text-[11px]" onClick={refreshLocation}>
+              <Navigation className="h-3 w-3" /> Update my location
+            </Button>
           </div>
 
           <div className="rounded-2xl border border-primary/20 border-red-500 bg-muted/40 p-4">

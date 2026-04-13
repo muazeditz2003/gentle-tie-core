@@ -13,6 +13,8 @@ export interface Worker {
   serviceAreas: string[];
   profilePhoto: string;
   city: string;
+  latitude?: number;
+  longitude?: number;
 }
 
 export interface ServiceCategory {
@@ -49,6 +51,8 @@ export const workers: Worker[] = [
     serviceAreas: ["Gulberg", "DHA", "Model Town"],
     profilePhoto: "",
     city: "Lahore",
+    latitude: 31.5090,
+    longitude: 74.3340,
   },
   {
     id: "2",
@@ -65,6 +69,8 @@ export const workers: Worker[] = [
     serviceAreas: ["Johar Town", "Gulberg", "Cantt"],
     profilePhoto: "",
     city: "Lahore",
+    latitude: 31.4680,
+    longitude: 74.2690,
   },
   {
     id: "3",
@@ -81,6 +87,8 @@ export const workers: Worker[] = [
     serviceAreas: ["DHA", "Bahria Town", "Model Town"],
     profilePhoto: "",
     city: "Lahore",
+    latitude: 31.4980,
+    longitude: 74.3860,
   },
   {
     id: "4",
@@ -97,6 +105,8 @@ export const workers: Worker[] = [
     serviceAreas: ["Gulberg", "Garden Town", "Faisal Town"],
     profilePhoto: "",
     city: "Lahore",
+    latitude: 31.5200,
+    longitude: 74.3420,
   },
   {
     id: "5",
@@ -113,6 +123,8 @@ export const workers: Worker[] = [
     serviceAreas: ["DHA", "Johar Town", "Gulberg"],
     profilePhoto: "",
     city: "Lahore",
+    latitude: 31.4850,
+    longitude: 74.3650,
   },
   {
     id: "6",
@@ -129,6 +141,8 @@ export const workers: Worker[] = [
     serviceAreas: ["Cantt", "Gulberg", "Township"],
     profilePhoto: "",
     city: "Lahore",
+    latitude: 31.5480,
+    longitude: 74.3550,
   },
   {
     id: "7",
@@ -145,6 +159,8 @@ export const workers: Worker[] = [
     serviceAreas: ["Model Town", "Gulberg", "DHA"],
     profilePhoto: "",
     city: "Lahore",
+    latitude: 31.4760,
+    longitude: 74.3290,
   },
   {
     id: "8",
@@ -161,6 +177,8 @@ export const workers: Worker[] = [
     serviceAreas: ["Johar Town", "Faisal Town"],
     profilePhoto: "",
     city: "Lahore",
+    latitude: 31.4610,
+    longitude: 74.2980,
   },
 ];
 

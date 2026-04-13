@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import { ArrowRight, Compass, HeartPulse, Search, Sparkles, UserSearch } from "lucide-react";
+import { ArrowRight, Compass, HeartPulse, MapPin, Navigation, Search, Sparkles, UserSearch } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -15,6 +15,8 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Worker } from "@/data/mockData";
 import { useAuth } from "@/contexts/AuthContext";
 import AppLayout from "@/components/AppLayout";
+import { calculateDistance } from "@/lib/geolocation";
+import { useRealtimeLocation } from "@/hooks/useRealtimeLocation";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 16 },
@@ -40,6 +42,7 @@ const placeholderBannerAd: NativeAd = {
 };
 
 const shuffleArray = <T,>(items: T[]) => [...items].sort(() => Math.random() - 0.5);
+const MAX_RADIUS_KM = 20;
 
 const Home = () => {
   const navigate = useNavigate();
@@ -53,6 +56,7 @@ const Home = () => {
   );
   const [feedAds, setFeedAds] = useState<NativeAd[]>([placeholderFeedAd]);
   const [bannerAd, setBannerAd] = useState<NativeAd>(placeholderBannerAd);
+  const { coords: browsingCoords, status: locationStatus, refresh: refreshLocation } = useRealtimeLocation();
 
   const firstName = user?.user_metadata?.full_name?.split(" ")[0] || "there";
 
@@ -109,6 +113,8 @@ const Home = () => {
           serviceAreas: w.service_areas || [],
           profilePhoto: profile?.avatar_url || "",
           city: w.city || "",
+          latitude: w.latitude ?? undefined,
+          longitude: w.longitude ?? undefined,
         };
       };
 
@@ -156,21 +162,36 @@ const Home = () => {
   }, [workers]);
 
   const nearbyWorkers = useMemo(() => {
-    if (!search.trim()) return workers.slice(0, 6);
     const q = search.toLowerCase().trim();
-    const words = q.split(/\s+/);
-    return workers.filter((w) => {
+    const words = q ? q.split(/\s+/) : [];
+
+    const keywordFiltered = workers.filter((w) => {
+      if (!words.length) return true;
       const name = w.name.toLowerCase();
       const prof = w.profession.toLowerCase();
-      const city = w.city.toLowerCase();
       return words.every(
         (word) =>
           name.includes(word) ||
-          prof.includes(word) ||
-          city.includes(word)
+          prof.includes(word)
       );
-    }).slice(0, 8);
-  }, [search, workers]);
+    });
+
+    if (!browsingCoords) {
+      return keywordFiltered.slice(0, 8).map((w) => ({ ...w, distance: 0 }));
+    }
+
+    return keywordFiltered
+      .map((w) => {
+        if (typeof w.latitude !== "number" || typeof w.longitude !== "number") {
+          return { ...w, distance: Number.POSITIVE_INFINITY };
+        }
+        const distance = calculateDistance(browsingCoords.latitude, browsingCoords.longitude, w.latitude, w.longitude);
+        return { ...w, distance: parseFloat(distance.toFixed(1)) };
+      })
+      .filter((w) => Number.isFinite(w.distance) && w.distance <= MAX_RADIUS_KM)
+      .sort((a, b) => a.distance - b.distance)
+      .slice(0, 8);
+  }, [search, workers, browsingCoords]);
 
   const quickCategories = [
     { id: "electrician", name: "Electrician", icon: "⚡" },
@@ -226,6 +247,20 @@ const Home = () => {
                 {suggestion}
               </button>
             ))}
+          </div>
+
+          <div className="mt-3 flex flex-wrap items-center gap-2 rounded-xl border bg-card p-2 text-xs text-muted-foreground">
+            <MapPin className="h-3.5 w-3.5" />
+            {locationStatus === "denied" ? (
+              <span>Please enable location to continue</span>
+            ) : browsingCoords ? (
+              <span>Using your current location · {browsingCoords.latitude.toFixed(3)}, {browsingCoords.longitude.toFixed(3)}</span>
+            ) : (
+              <span>Detecting your current location...</span>
+            )}
+            <Button type="button" variant="ghost" size="sm" className="h-7 gap-1 px-2 text-[11px]" onClick={refreshLocation}>
+              <Navigation className="h-3 w-3" /> Update my location
+            </Button>
           </div>
 
           <div className="mt-3 rounded-2xl border border-primary/25 bg-primary/5 p-4">

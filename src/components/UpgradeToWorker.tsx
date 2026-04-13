@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Briefcase, ArrowRight } from "lucide-react";
+import { Briefcase, ArrowRight, Navigation } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
+import { getCurrentPosition, type Coords } from "@/lib/geolocation";
 
 const UpgradeToWorker = () => {
   const { user } = useAuth();
@@ -17,13 +18,30 @@ const UpgradeToWorker = () => {
   const [loading, setLoading] = useState(false);
   const [profession, setProfession] = useState("");
   const [experience, setExperience] = useState("");
-  const [city, setCity] = useState("");
-  const [serviceArea, setServiceArea] = useState("");
+  const [location, setLocation] = useState<Coords | null>(null);
+  const [capturingLocation, setCapturingLocation] = useState(false);
+
+  const captureLocation = async () => {
+    setCapturingLocation(true);
+    try {
+      const coords = await getCurrentPosition();
+      setLocation(coords);
+      toast.success("Service location saved.");
+    } catch {
+      toast.error("Please enable location access to continue.");
+    } finally {
+      setCapturingLocation(false);
+    }
+  };
 
   const handleUpgrade = async () => {
     if (!user) return;
     if (!profession.trim() || !experience.trim()) {
       toast.error("Please fill in profession and experience.");
+      return;
+    }
+    if (!location) {
+      toast.error("Use your current location as your fixed service location.");
       return;
     }
 
@@ -34,8 +52,10 @@ const UpgradeToWorker = () => {
         user_id: user.id,
         profession: profession.trim(),
         experience: parseInt(experience) || 0,
-        city: city.trim() || null,
-        service_areas: serviceArea.split(",").map(s => s.trim()).filter(Boolean),
+        city: null,
+        service_areas: [],
+        latitude: location.latitude,
+        longitude: location.longitude,
         available: true,
       });
 
@@ -58,11 +78,6 @@ const UpgradeToWorker = () => {
       // Role might already exist, that's fine
       if (roleError && !roleError.message.includes("duplicate") && !roleError.message.includes("unique")) {
         console.warn("Role insert warning:", roleError.message);
-      }
-
-      // Update profile city if provided
-      if (city.trim()) {
-        await supabase.from("profiles").update({ city: city.trim() }).eq("user_id", user.id);
       }
 
       toast.success("You're now registered as a service! Your profile is live.");
@@ -113,13 +128,16 @@ const UpgradeToWorker = () => {
             <Label>Years of Experience *</Label>
             <Input type="number" placeholder="e.g. 5" className="mt-1.5" value={experience} onChange={e => setExperience(e.target.value)} />
           </div>
-          <div>
-            <Label>City</Label>
-            <Input placeholder="e.g. Lahore" className="mt-1.5" value={city} onChange={e => setCity(e.target.value)} />
-          </div>
-          <div>
-            <Label>Service Areas</Label>
-            <Input placeholder="DHA, Gulberg, Model Town" className="mt-1.5" value={serviceArea} onChange={e => setServiceArea(e.target.value)} />
+          <div className="rounded-xl border bg-muted/40 p-3">
+            <p className="text-sm font-medium text-foreground">Use your current location as your service location?</p>
+            <p className="mt-1 text-xs text-muted-foreground">This location is fixed for nearby matching and cannot be changed frequently.</p>
+            <Button type="button" variant="outline" className="mt-3 w-full gap-2" onClick={captureLocation} disabled={capturingLocation || !!location}>
+              <Navigation className="h-4 w-4" />
+              {location ? "Service location saved" : capturingLocation ? "Detecting location..." : "Use my current location"}
+            </Button>
+            {location && (
+              <p className="mt-2 text-xs text-muted-foreground">{location.latitude.toFixed(5)}, {location.longitude.toFixed(5)}</p>
+            )}
           </div>
           <Button onClick={handleUpgrade} disabled={loading} className="w-full bg-gradient-brand text-primary-foreground hover:opacity-90 rounded-xl">
             {loading ? "Setting up..." : "Activate Service Profile"}
