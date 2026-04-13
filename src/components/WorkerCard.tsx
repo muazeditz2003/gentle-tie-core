@@ -9,9 +9,10 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 interface Props {
   worker: Worker;
   index?: number;
+  sponsored?: boolean;
 }
 
-const WorkerCard = ({ worker, index = 0 }: Props) => {
+const WorkerCard = ({ worker, index = 0, sponsored = false }: Props) => {
   const initials = worker.name.split(" ").map(n => n[0]).join("").slice(0, 2);
   const { t } = useI18n();
 
@@ -23,7 +24,9 @@ const WorkerCard = ({ worker, index = 0 }: Props) => {
     >
       <Link
         to={`/worker/${worker.id}`}
-        className="tap-feedback block p-4 md:p-5 rounded-2xl bg-card border hover:border-primary/30 hover:shadow-premium hover:-translate-y-0.5 transition-all duration-300 group"
+        className={`tap-feedback block p-4 md:p-5 rounded-2xl bg-card border hover:border-primary/30 hover:shadow-premium hover:-translate-y-0.5 transition-all duration-300 group ${
+          sponsored ? "border-primary/40 shadow-premium" : ""
+        }`}
       >
         <div className="flex gap-4">
           <Avatar className="w-14 h-14 rounded-xl border-2 border-border group-hover:border-primary/30 transition-colors">
@@ -35,6 +38,9 @@ const WorkerCard = ({ worker, index = 0 }: Props) => {
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
               <h3 className="font-semibold text-card-foreground truncate">{worker.name}</h3>
+                {sponsored && (
+                  <Badge variant="outline" className="rounded-full text-[10px]">Sponsored</Badge>
+                )}
               {worker.verified && (
                 <CheckCircle className="w-4 h-4 text-primary shrink-0" />
               )}
