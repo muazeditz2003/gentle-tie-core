@@ -24,6 +24,7 @@ import Disclaimer from "./pages/Disclaimer.tsx";
 import PrivacyPolicy from "./pages/PrivacyPolicy.tsx";
 import TermsAndConditions from "./pages/TermsAndConditions.tsx";
 import SupportChatbot from "./components/SupportChatbot";
+import MobileBottomNav from "@/components/MobileBottomNav";
 
 const queryClient = new QueryClient();
 
@@ -54,6 +55,7 @@ const App = () => (
               <Route path="/terms" element={<TermsAndConditions />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
+            <MobileBottomNav />
             <SupportChatbot />
           </BrowserRouter>
         </TooltipProvider>
