@@ -81,9 +81,11 @@ const Register = () => {
       }
       return;
     }
+    const redirect = searchParams.get("redirect") || "/";
+
     if (data.session) {
       toast.success("Account created successfully!");
-      navigate("/", { replace: true });
+      navigate(redirect, { replace: true });
       return;
     }
     toast.success("Account created! Check your email to confirm.");
