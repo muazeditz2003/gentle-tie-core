@@ -5,11 +5,12 @@ import { ArrowRight, Compass, HeartPulse, MessageSquare, Search, ShieldCheck, Sp
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import WorkerCard from "@/components/WorkerCard";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import NativeAdCard, { type NativeAd } from "@/components/NativeAdCard";
 import MonetizedWorkerGrid from "@/components/MonetizedWorkerGrid";
-import { serviceCategories } from "@/data/mockData";
+import { serviceCategories, workers as mockWorkers } from "@/data/mockData";
 import { supabase } from "@/integrations/supabase/client";
 import type { Worker } from "@/data/mockData";
 import { useAuth } from "@/contexts/AuthContext";
@@ -28,14 +29,32 @@ const quickCategories = [
   { id: "blood-donors", name: "Blood Donation", icon: "🩸", urgent: true },
 ];
 
+const placeholderFeedAd: NativeAd = {
+  id: "placeholder-feed-ad",
+  title: "Your Ad Here",
+  description: "Reach local users who are actively searching for nearby services.",
+  image_url: null,
+  cta_label: "Learn More",
+  cta_url: "#",
+};
+
+const placeholderBannerAd: NativeAd = {
+  id: "placeholder-banner-ad",
+  title: "Advertise Your Business Here",
+  description: "Reach thousands of local users instantly",
+  image_url: null,
+  cta_label: "Get Started",
+  cta_url: "#",
+};
+
 const Index = () => {
   const navigate = useNavigate();
-  const [topWorkers, setTopWorkers] = useState<Worker[]>([]);
+  const [topWorkers, setTopWorkers] = useState<Worker[]>(mockWorkers.slice(0, 6));
   const [search, setSearch] = useState("");
   const [suggestions, setSuggestions] = useState<string[]>([]);
-  const [feedAds, setFeedAds] = useState<NativeAd[]>([]);
-  const [bannerAds, setBannerAds] = useState<NativeAd[]>([]);
-  const [adFrequency, setAdFrequency] = useState(5);
+  const [feedAds] = useState<NativeAd[]>([placeholderFeedAd]);
+  const [bannerAd] = useState<NativeAd>(placeholderBannerAd);
+  const adFrequency = 4;
   const [sponsoredServiceIds, setSponsoredServiceIds] = useState<string[]>([]);
   const { user, loading } = useAuth();
 
@@ -83,14 +102,9 @@ const Index = () => {
             };
           });
 
-        const [featuredRes, boostsRes, adsRes, placementRes] = await Promise.all([
+        const [featuredRes, boostsRes] = await Promise.all([
           (supabase as any).from("featured_services").select("service_id").eq("is_active", true),
           (supabase as any).from("service_boosts").select("service_id").eq("status", "active"),
-          (supabase as any)
-            .from("native_ads")
-            .select("id,title,description,image_url,cta_label,cta_url,placement")
-            .eq("is_active", true),
-          (supabase as any).from("ad_placement_settings").select("frequency_min").eq("placement_key", "home_feed").maybeSingle(),
         ]);
 
         const sponsorIds = new Set<string>([
@@ -101,15 +115,22 @@ const Index = () => {
         const normal = mapped.filter((w) => !sponsorIds.has(w.id));
         setTopWorkers([...sponsored, ...normal]);
         setSponsoredServiceIds(Array.from(sponsorIds));
-
-        const ads = (adsRes.data || []) as NativeAd[];
-        setFeedAds(ads.filter((a: any) => a.placement === "home_feed"));
-        setBannerAds(ads.filter((a: any) => a.placement === "home_banner"));
-        setAdFrequency(Math.max(4, placementRes.data?.frequency_min || 5));
       }
     };
     fetchWorkers();
   }, []);
+
+  const featuredWorkers = useMemo(() => {
+    const sponsoredWorkers = topWorkers.filter((worker) => sponsoredServiceIds.includes(worker.id)).slice(0, 3);
+    if (sponsoredWorkers.length > 0) return sponsoredWorkers;
+
+    const fallbackSource = topWorkers.length > 0 ? topWorkers : mockWorkers;
+    return fallbackSource.slice(0, 3);
+  }, [topWorkers, sponsoredServiceIds]);
+
+  const nearbyWorkers = useMemo(() => {
+    return topWorkers.length > 0 ? topWorkers : mockWorkers.slice(0, 6);
+  }, [topWorkers]);
 
   const workerSuggestions = useMemo(() => {
     const cities = [...new Set(topWorkers.map((w) => w.city).filter(Boolean))].slice(0, 2);
@@ -165,13 +186,18 @@ const Index = () => {
             ))}
           </div>
 
-          {bannerAds.length > 0 && (
-            <div className="grid gap-3 md:grid-cols-2">
-              {bannerAds.slice(0, 2).map((ad) => (
-                <NativeAdCard key={ad.id} ad={ad} />
-              ))}
+          <div className="rounded-2xl border border-primary/20 bg-muted/40 p-4">
+            <div className="grid gap-4 md:grid-cols-[1.4fr,1fr] md:items-center">
+              <div>
+                <p className="text-lg font-semibold text-foreground">{bannerAd.title}</p>
+                <p className="mt-1 text-sm text-muted-foreground">{bannerAd.description}</p>
+                <Button asChild className="mt-3 rounded-xl">
+                  <a href={bannerAd.cta_url} target="_blank" rel="noreferrer">{bannerAd.cta_label}</a>
+                </Button>
+              </div>
+              <div className="h-28 rounded-xl border border-dashed bg-card/70 sm:h-32" aria-label="Banner ad placeholder image" />
             </div>
-          )}
+          </div>
 
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
               <Button className="h-11 justify-start rounded-xl" onClick={() => navigate("/discover")}>Find a Service</Button>
@@ -221,22 +247,24 @@ const Index = () => {
 
         <motion.section initial="hidden" animate="visible" variants={fadeUp} custom={3}>
           <div className="mb-3 flex items-center justify-between">
-            <h2 className="text-lg font-bold text-foreground">Nearby Services</h2>
+            <h2 className="text-lg font-bold text-foreground">Featured Workers</h2>
+            <Badge variant="outline" className="rounded-full">Sponsored</Badge>
+          </div>
+          <div className="mb-6 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+            {featuredWorkers.map((worker, index) => (
+              <WorkerCard key={`featured-worker-${worker.id}-${index}`} worker={worker} index={index} sponsored />
+            ))}
+          </div>
+
+          <div className="mb-3 flex items-center justify-between">
+            <h2 className="text-lg font-bold text-foreground">Nearby Workers</h2>
             <Button variant="ghost" size="sm" className="gap-1" onClick={() => navigate("/discover")}>View all <ArrowRight className="h-4 w-4" /></Button>
           </div>
-          {topWorkers.length === 0 ? (
-            <div className="rounded-2xl border bg-card p-10 text-center">
-              <Sparkles className="mx-auto mb-3 h-10 w-10 text-muted-foreground" />
-              <p className="font-semibold text-foreground">Workers are loading</p>
-              <p className="text-sm text-muted-foreground">Please check back in a moment.</p>
-            </div>
-          ) : (
-            <MonetizedWorkerGrid
-              workers={topWorkers.map((w) => ({ ...w, isSponsored: sponsoredServiceIds.includes(w.id) }))}
-              ads={feedAds}
-              adFrequencyMin={adFrequency}
-            />
-          )}
+          <MonetizedWorkerGrid
+            workers={nearbyWorkers.map((w) => ({ ...w, isSponsored: sponsoredServiceIds.includes(w.id) }))}
+            ads={feedAds}
+            adFrequencyMin={adFrequency}
+          />
         </motion.section>
 
         <motion.section initial="hidden" animate="visible" variants={fadeUp} custom={4} className="rounded-3xl border bg-card p-6 md:p-8">
