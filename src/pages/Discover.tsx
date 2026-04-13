@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
-import { Search, MapPin, Navigation } from "lucide-react";
+import { Search, Map, MapPin, Navigation } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -27,6 +27,7 @@ const Discover = () => {
   const selectedCategory = searchParams.get("category") || "";
   const [userCoords, setUserCoords] = useState<Coords | null>(null);
   const [detectingLocation, setDetectingLocation] = useState(false);
+  const [showMapView, setShowMapView] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !user) navigate("/login");
@@ -198,7 +199,7 @@ const Discover = () => {
       <div className="container mx-auto px-4 py-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-foreground mb-2">{t("discover.title")}</h1>
-          <p className="text-sm text-muted-foreground mb-1">Workers can also browse and hire other professionals</p>
+          <p className="text-sm text-muted-foreground mb-3">Workers can also browse and hire other professionals بسهولة</p>
           <div className="flex items-center gap-2 text-muted-foreground text-sm">
             <MapPin className="w-4 h-4" />
             {userCoords ? (
@@ -212,23 +213,28 @@ const Discover = () => {
           </div>
         </div>
 
-        <div className="flex flex-col sm:flex-row gap-3 mb-6">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input placeholder={t("discover.searchPlaceholder")} value={search} onChange={e => setSearch(e.target.value)} className="pl-10 h-11 rounded-xl" />
-          </div>
-          <div className="flex gap-2">
-            {(["distance", "rating", "experience"] as SortKey[]).map(s => (
-              <Button
-                key={s}
-                variant={sort === s ? "default" : "outline"}
-                size="sm"
-                onClick={() => setSort(s)}
-                className={sort === s ? "bg-gradient-brand text-primary-foreground" : ""}
-              >
-                {sortLabels[s]}
+        <div className="sticky top-16 z-30 mb-5 rounded-2xl bg-background/90 backdrop-blur supports-[backdrop-filter]:bg-background/75 py-2">
+          <div className="flex flex-col sm:flex-row gap-3">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input placeholder="Find services near you..." value={search} onChange={e => setSearch(e.target.value)} className="pl-10 h-11 rounded-xl" />
+            </div>
+            <div className="flex gap-2 overflow-x-auto">
+              {(["distance", "rating", "experience"] as SortKey[]).map(s => (
+                <Button
+                  key={s}
+                  variant={sort === s ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setSort(s)}
+                  className={`${sort === s ? "bg-gradient-brand text-primary-foreground" : ""} shrink-0 rounded-full`}
+                >
+                  {sortLabels[s]}
+                </Button>
+              ))}
+              <Button variant="outline" size="sm" className="rounded-full shrink-0 gap-1" onClick={() => setShowMapView(v => !v)}>
+                <Map className="w-3.5 h-3.5" /> {showMapView ? "List" : "Map"}
               </Button>
-            ))}
+            </div>
           </div>
         </div>
 
@@ -243,16 +249,27 @@ const Discover = () => {
               onClick={() => toggleCategory(cat.id)}
             >
               {cat.icon} {cat.name}
+              {cat.name.toLowerCase().includes("blood") && (
+                <span className="ml-1 rounded-full bg-destructive px-1.5 py-0.5 text-[10px] text-destructive-foreground">Urgent</span>
+              )}
             </Badge>
           ))}
         </div>
 
         <p className="text-sm text-muted-foreground mb-4">{filtered.length} {t("discover.workersFound")}</p>
-        <div className="grid md:grid-cols-2 gap-4">
-          {filtered.map((w, i) => (
-            <WorkerCard key={w.id} worker={w} index={i} />
-          ))}
-        </div>
+        {showMapView ? (
+          <div className="rounded-2xl border bg-card p-10 text-center">
+            <Map className="w-10 h-10 text-primary mx-auto mb-3" />
+            <p className="font-semibold text-card-foreground mb-1">Map view preview</p>
+            <p className="text-sm text-muted-foreground">Switch to list for quick booking and chat.</p>
+          </div>
+        ) : (
+          <div className="grid md:grid-cols-2 gap-4">
+            {filtered.map((w, i) => (
+              <WorkerCard key={w.id} worker={w} index={i} />
+            ))}
+          </div>
+        )}
 
         {filtered.length === 0 && (
           <div className="text-center py-16">
