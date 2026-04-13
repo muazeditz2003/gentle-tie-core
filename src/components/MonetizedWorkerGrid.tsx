@@ -17,8 +17,6 @@ const MonetizedWorkerGrid = ({
   adFrequencyMin = 4,
   className = "grid gap-3 md:grid-cols-2 xl:grid-cols-3",
 }: MonetizedWorkerGridProps) => {
-  if (workers.length === 0) return null;
-
   const safeInterval = Math.max(4, adFrequencyMin || 4);
   const effectiveAds: NativeAd[] = ads.length
     ? ads
@@ -36,9 +34,10 @@ const MonetizedWorkerGrid = ({
   let adIndex = 0;
   let insertedAds = 0;
 
-  workers.forEach((worker, index) => {
+  workers.forEach((worker) => {
     feed.push({ type: "worker", worker });
-    if ((index + 1) % safeInterval === 0) {
+    const workerCount = feed.filter((item) => item.type === "worker").length;
+    if (workerCount % safeInterval === 0) {
       feed.push({ type: "ad", ad: effectiveAds[adIndex % effectiveAds.length] });
       adIndex += 1;
       insertedAds += 1;
