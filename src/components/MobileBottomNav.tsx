@@ -49,7 +49,7 @@ const MobileBottomNav = () => {
           <PopoverContent align="end" className="w-52 rounded-2xl p-2">
             <Link to="/discover" className="tap-feedback flex items-center gap-2 rounded-xl px-3 py-2 text-sm hover:bg-muted">
               <BriefcaseBusiness className="h-4 w-4 text-primary" />
-              <span>Find Worker</span>
+              <span>Find Service</span>
             </Link>
             <Link to="/blood-donors" className="tap-feedback flex items-center gap-2 rounded-xl px-3 py-2 text-sm hover:bg-muted">
               <Droplets className="h-4 w-4 text-destructive" />
