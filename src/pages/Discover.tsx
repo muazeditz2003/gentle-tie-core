@@ -16,8 +16,7 @@ type SortKey = "distance" | "rating" | "experience" | "price";
 
 const Discover = () => {
   const [searchParams, setSearchParams] = useSearchParams();
-  const navigate = useNavigate();
-  const { user, loading: authLoading } = useAuth();
+  const { user } = useAuth();
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState<SortKey>("distance");
@@ -29,12 +28,8 @@ const Discover = () => {
   const [showMapView, setShowMapView] = useState(false);
 
   useEffect(() => {
-    if (!authLoading && !user) navigate("/login");
-  }, [authLoading, user, navigate]);
-
-  useEffect(() => {
-    if (user) detectLocation();
-  }, [user]);
+    detectLocation();
+  }, []);
 
   const detectLocation = async () => {
     setDetectingLocation(true);
@@ -58,7 +53,7 @@ const Discover = () => {
       if (error) throw error;
       return data;
     },
-    enabled: !!user,
+    enabled: true,
   });
 
   useEffect(() => {
@@ -85,7 +80,7 @@ const Discover = () => {
       if (error) throw error;
       return data;
     },
-    enabled: !!user,
+    enabled: true,
   });
 
   const { data: reviewStats } = useQuery({
@@ -101,7 +96,7 @@ const Discover = () => {
       });
       return stats;
     },
-    enabled: !!user,
+    enabled: true,
   });
 
   const workersList = useMemo(() => {
@@ -179,18 +174,6 @@ const Discover = () => {
     price: "Price",
   };
 
-  if (authLoading) {
-    return (
-      <div className="min-h-screen bg-background">
-        <div className="px-4 py-16 text-center">
-          <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
-        </div>
-      </div>
-    );
-  }
-
-  if (!user) return null;
-
   const filteredWithAdvanced = filtered.filter((w) => {
     if (minRating > 0 && w.rating < minRating) return false;
     if (priceBand === "budget") return w.experience <= 2;
@@ -207,7 +190,7 @@ const Discover = () => {
   });
 
   return (
-    <AppLayout title="Explore" subtitle="Discover trusted workers nearby with smart filters and map/list browsing.">
+    <AppLayout title="Explore" subtitle="Discover trusted services nearby with smart filters and map/list browsing.">
       <div className="space-y-5">
         <div className="rounded-2xl border bg-muted/40 p-3">
           <div className="mb-3 flex items-center gap-2 text-xs text-muted-foreground">
@@ -282,7 +265,7 @@ const Discover = () => {
           ))}
         </div>
 
-        <p className="text-sm text-muted-foreground">{sorted.length} workers found</p>
+        <p className="text-sm text-muted-foreground">{sorted.length} services found</p>
         {showMapView ? (
           <div className="rounded-2xl border bg-card p-12 text-center">
             <Map className="mx-auto mb-2 h-9 w-9 text-primary" />
@@ -299,7 +282,7 @@ const Discover = () => {
 
         {sorted.length === 0 && (
           <div className="rounded-2xl border bg-muted/30 p-10 text-center">
-            <p className="font-semibold text-foreground">No workers match this filter set</p>
+            <p className="font-semibold text-foreground">No services match this filter set</p>
             <p className="text-sm text-muted-foreground">Try widening distance, rating, or category filters.</p>
           </div>
         )}
