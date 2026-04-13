@@ -34,14 +34,20 @@ const MonetizedWorkerGrid = ({
       ];
   const feed: Array<{ type: "worker"; worker: FeedWorker } | { type: "ad"; ad: NativeAd }> = [];
   let adIndex = 0;
+  let insertedAds = 0;
 
   workers.forEach((worker, index) => {
     feed.push({ type: "worker", worker });
     if ((index + 1) % safeInterval === 0) {
       feed.push({ type: "ad", ad: effectiveAds[adIndex % effectiveAds.length] });
       adIndex += 1;
+      insertedAds += 1;
     }
   });
+
+  if (insertedAds === 0) {
+    feed.push({ type: "ad", ad: effectiveAds[0] });
+  }
 
   return (
     <div className={className}>
