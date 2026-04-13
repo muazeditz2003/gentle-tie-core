@@ -1,25 +1,38 @@
-import { useState, useEffect } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { MapPin, Save, Star, MessageSquare, Eye, ToggleLeft, ToggleRight, Navigation, Calendar, Clock, CheckCircle, XCircle, Search } from "lucide-react";
+import {
+  Calendar,
+  CheckCircle,
+  Clock,
+  Compass,
+  HeartPulse,
+  MapPin,
+  MessageSquare,
+  Navigation,
+  Save,
+  Search,
+  Star,
+  UserCheck,
+  XCircle,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
+import { Textarea } from "@/components/ui/textarea";
 import AvatarUpload from "@/components/AvatarUpload";
-import StarRating from "@/components/StarRating";
 import BloodDonationCard from "@/components/BloodDonationCard";
+import StarRating from "@/components/StarRating";
+import AppLayout from "@/components/AppLayout";
 import { useAuth } from "@/contexts/AuthContext";
 import { useWorkerProfile } from "@/hooks/useWorkerProfile";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
 import { getCurrentPosition } from "@/lib/geolocation";
+import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 
 const WorkerDashboard = () => {
   const navigate = useNavigate();
@@ -51,7 +64,6 @@ const WorkerDashboard = () => {
     if (!authLoading && !user) navigate("/login");
   }, [authLoading, user, navigate]);
 
-  // Reviews
   const { data: reviews = [] } = useQuery({
     queryKey: ["my_reviews", workerData?.id],
     queryFn: async () => {
@@ -66,7 +78,6 @@ const WorkerDashboard = () => {
     enabled: !!workerData?.id,
   });
 
-  // Bookings
   const { data: bookings = [] } = useQuery({
     queryKey: ["worker_bookings", workerData?.id],
     queryFn: async () => {
@@ -81,7 +92,6 @@ const WorkerDashboard = () => {
     enabled: !!workerData?.id,
   });
 
-  // Conversations
   const { data: conversations = [] } = useQuery({
     queryKey: ["worker_conversations", user?.id],
     queryFn: async () => {
@@ -112,33 +122,40 @@ const WorkerDashboard = () => {
         .select("user_id, full_name, avatar_url")
         .in("user_id", ids);
 
-      return ids.map(id => {
+      return ids.map((id) => {
         const p = profiles?.find((pr: any) => pr.user_id === id);
         const info = userMap.get(id)!;
-        return { userId: id, name: p?.full_name || "Unknown", avatarUrl: p?.avatar_url, lastMessage: info.lastMessage, time: info.time };
+        return {
+          userId: id,
+          name: p?.full_name || "Unknown",
+          avatarUrl: p?.avatar_url,
+          lastMessage: info.lastMessage,
+          time: info.time,
+        };
       });
     },
     enabled: !!user,
   });
 
-  // Realtime for bookings and messages
   useEffect(() => {
     if (!user) return;
     const channelName = `worker-dash-${user.id}-${Math.random().toString(36).slice(2)}`;
     const ch = supabase.channel(channelName);
     ch.on("postgres_changes", { event: "*", schema: "public", table: "bookings" }, () => {
-        queryClient.invalidateQueries({ queryKey: ["worker_bookings"] });
-      })
-      .on("postgres_changes", { event: "INSERT", schema: "public", table: "messages" }, () => {
-        queryClient.invalidateQueries({ queryKey: ["worker_conversations"] });
-      });
+      queryClient.invalidateQueries({ queryKey: ["worker_bookings"] });
+    }).on("postgres_changes", { event: "INSERT", schema: "public", table: "messages" }, () => {
+      queryClient.invalidateQueries({ queryKey: ["worker_conversations"] });
+    });
     ch.subscribe();
-    return () => { supabase.removeChannel(ch); };
+    return () => {
+      supabase.removeChannel(ch);
+    };
   }, [user, queryClient]);
 
-  const avgRating = reviews.length
-    ? (reviews.reduce((s: number, r: any) => s + r.rating, 0) / reviews.length).toFixed(1)
-    : "0";
+  const avgRating = useMemo(() => {
+    if (!reviews.length) return "0";
+    return (reviews.reduce((s: number, r: any) => s + r.rating, 0) / reviews.length).toFixed(1);
+  }, [reviews]);
 
   const pendingBookings = bookings.filter((b: any) => b.status === "pending");
   const confirmedBookings = bookings.filter((b: any) => b.status === "confirmed");
@@ -146,11 +163,21 @@ const WorkerDashboard = () => {
   const handleSave = async () => {
     if (!workerData) return;
     setSaving(true);
-    const areas = serviceAreas.split(",").map(s => s.trim()).filter(Boolean);
+    const areas = serviceAreas
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
 
     const { error: workerError } = await supabase
       .from("workers")
-      .update({ profession, experience: parseInt(experience) || 0, description, city, service_areas: areas, available })
+      .update({
+        profession,
+        experience: parseInt(experience) || 0,
+        description,
+        city,
+        service_areas: areas,
+        available,
+      })
       .eq("id", workerData.id);
 
     const { error: profileError } = await supabase
@@ -159,8 +186,9 @@ const WorkerDashboard = () => {
       .eq("user_id", user!.id);
 
     setSaving(false);
-    if (workerError || profileError) toast.error("Failed to save changes");
-    else {
+    if (workerError || profileError) {
+      toast.error("Failed to save changes");
+    } else {
       toast.success("Profile updated!");
       queryClient.invalidateQueries({ queryKey: ["my_worker_profile"] });
     }
@@ -189,10 +217,7 @@ const WorkerDashboard = () => {
   };
 
   const handleBookingAction = async (bookingId: string, action: "confirmed" | "rejected") => {
-    const { error } = await supabase
-      .from("bookings")
-      .update({ status: action })
-      .eq("id", bookingId);
+    const { error } = await supabase.from("bookings").update({ status: action }).eq("id", bookingId);
     if (error) toast.error("Failed to update booking");
     else {
       toast.success(`Booking ${action}!`);
@@ -202,224 +227,248 @@ const WorkerDashboard = () => {
 
   if (authLoading || isLoading) {
     return (
-      <div className="min-h-screen bg-background">
-        <Navbar />
-        <div className="container mx-auto px-4 py-16 text-center">
-          <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
-        </div>
+      <div className="grid min-h-screen place-items-center bg-background">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
       </div>
     );
   }
 
   if (!workerData) {
     return (
-      <div className="min-h-screen bg-background">
-        <Navbar />
-        <div className="container mx-auto px-4 py-16 text-center">
-          <p className="text-muted-foreground mb-4">You don't have a worker profile.</p>
+      <AppLayout title="Worker Dashboard" subtitle="Create your worker profile to start receiving local jobs.">
+        <div className="rounded-2xl border bg-card p-8 text-center">
+          <p className="mb-4 text-muted-foreground">You don't have a worker profile yet.</p>
           <Button onClick={() => navigate("/register?role=worker")}>Register as Worker</Button>
         </div>
-        <Footer />
-      </div>
+      </AppLayout>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <Navbar />
-
-      <div className="container mx-auto px-4 py-8 max-w-5xl">
-        <div className="flex items-center justify-between mb-8">
-          <h1 className="text-3xl font-bold text-foreground">Worker Dashboard</h1>
-          <Button variant="outline" className="gap-2" onClick={() => navigate("/discover")}>
-            <Search className="w-4 h-4" /> Find Workers
-          </Button>
-        </div>
-
-        {/* Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
+    <AppLayout
+      title="Worker Dashboard"
+      subtitle="Manage bookings, profile and chats with a fast mobile-first workflow."
+      action={
+        <Button className="h-10 gap-2 rounded-xl" onClick={() => navigate("/discover")}>
+          <Search className="h-4 w-4" /> Explore
+        </Button>
+      }
+    >
+      <section className="space-y-6">
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
           {[
             { label: "Rating", value: avgRating, icon: Star },
-            { label: "Reviews", value: String(reviews.length), icon: Star },
+            { label: "Reviews", value: String(reviews.length), icon: UserCheck },
             { label: "Bookings", value: String(bookings.length), icon: Calendar },
             { label: "Messages", value: String(conversations.length), icon: MessageSquare },
-            { label: "Status", value: available ? "Available" : "Offline", icon: available ? ToggleRight : ToggleLeft },
-          ].map(s => (
-            <motion.div key={s.label} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="bg-card border rounded-xl p-4 text-center">
-              <s.icon className="w-5 h-5 text-primary mx-auto mb-2" />
-              <p className="text-2xl font-bold text-card-foreground">{s.value}</p>
+            { label: "Status", value: available ? "Available" : "Offline", icon: available ? CheckCircle : XCircle },
+          ].map((s) => (
+            <motion.div key={s.label} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="rounded-2xl border bg-card p-4">
+              <div className="mb-2 inline-flex rounded-xl bg-muted p-2">
+                <s.icon className="h-4 w-4 text-primary" />
+              </div>
+              <p className="text-xl font-bold text-card-foreground">{s.value}</p>
               <p className="text-xs text-muted-foreground">{s.label}</p>
             </motion.div>
           ))}
         </div>
 
-        <Tabs defaultValue="profile" className="space-y-6">
-          <TabsList className="bg-muted">
-            <TabsTrigger value="profile">Profile</TabsTrigger>
-            <TabsTrigger value="blood">Blood Donation</TabsTrigger>
-            <TabsTrigger value="bookings">
-              Bookings {pendingBookings.length > 0 && <Badge className="ml-1.5 bg-destructive text-destructive-foreground h-5 min-w-5 text-xs">{pendingBookings.length}</Badge>}
-            </TabsTrigger>
-            <TabsTrigger value="messages">Messages</TabsTrigger>
-            <TabsTrigger value="reviews">Reviews</TabsTrigger>
+        <div className="grid gap-3 md:grid-cols-3">
+          <button onClick={() => navigate("/discover")} className="tap-feedback rounded-2xl border bg-card p-4 text-left">
+            <Compass className="mb-2 h-5 w-5 text-primary" />
+            <p className="font-semibold text-card-foreground">Find more demand</p>
+            <p className="text-xs text-muted-foreground">See local categories and active jobs</p>
+          </button>
+          <button onClick={() => navigate("/blood-donors")} className="tap-feedback rounded-2xl border bg-card p-4 text-left">
+            <HeartPulse className="mb-2 h-5 w-5 text-destructive" />
+            <p className="font-semibold text-card-foreground">Urgent network</p>
+            <p className="text-xs text-muted-foreground">Help with blood and emergency requests</p>
+          </button>
+          <button onClick={() => navigate("/messages")} className="tap-feedback rounded-2xl border bg-card p-4 text-left">
+            <MessageSquare className="mb-2 h-5 w-5 text-secondary" />
+            <p className="font-semibold text-card-foreground">Reply faster</p>
+            <p className="text-xs text-muted-foreground">Keep your response time high</p>
+          </button>
+        </div>
+
+        <Tabs defaultValue="overview" className="space-y-4">
+          <TabsList className="grid h-auto w-full grid-cols-3 gap-2 rounded-2xl bg-muted p-1 md:grid-cols-6">
+            <TabsTrigger value="overview" className="rounded-xl">Overview</TabsTrigger>
+            <TabsTrigger value="profile" className="rounded-xl">Profile</TabsTrigger>
+            <TabsTrigger value="bookings" className="rounded-xl">Bookings</TabsTrigger>
+            <TabsTrigger value="messages" className="rounded-xl">Messages</TabsTrigger>
+            <TabsTrigger value="reviews" className="rounded-xl">Reviews</TabsTrigger>
+            <TabsTrigger value="blood" className="rounded-xl">Blood</TabsTrigger>
           </TabsList>
 
-          {/* Profile Tab */}
+          <TabsContent value="overview" className="space-y-4">
+            <div className="grid gap-4 lg:grid-cols-2">
+              <div className="rounded-2xl border bg-card p-5">
+                <h3 className="mb-3 font-semibold text-card-foreground">Pending requests ({pendingBookings.length})</h3>
+                {pendingBookings.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">No pending requests right now.</p>
+                ) : (
+                  <div className="space-y-2">
+                    {pendingBookings.slice(0, 3).map((b: any) => (
+                      <div key={b.id} className="rounded-xl bg-muted/50 p-3">
+                        <p className="text-sm font-medium text-card-foreground">{b.profiles?.full_name || "Customer"}</p>
+                        <p className="text-xs text-muted-foreground truncate">{b.service_description}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <div className="rounded-2xl border bg-card p-5">
+                <h3 className="mb-3 font-semibold text-card-foreground">Upcoming ({confirmedBookings.length})</h3>
+                {confirmedBookings.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">No upcoming confirmed jobs.</p>
+                ) : (
+                  <div className="space-y-2">
+                    {confirmedBookings.slice(0, 3).map((b: any) => (
+                      <div key={b.id} className="rounded-xl bg-muted/50 p-3">
+                        <p className="text-sm font-medium text-card-foreground">{b.profiles?.full_name || "Customer"}</p>
+                        <p className="text-xs text-muted-foreground">{new Date(b.booking_date).toLocaleDateString()} · {b.booking_time}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </TabsContent>
+
           <TabsContent value="profile">
-            <div className="bg-card border rounded-2xl p-6">
-              <h2 className="font-semibold text-card-foreground mb-4">Edit Profile</h2>
-              <div className="flex items-start gap-4 mb-6">
+            <div className="rounded-2xl border bg-card p-6">
+              <h2 className="mb-4 font-semibold text-card-foreground">Edit worker profile</h2>
+              <div className="mb-6 flex items-start gap-4">
                 <AvatarUpload currentUrl={(workerData as any).profiles?.avatar_url} onUpload={handleAvatarUpload} />
-                <div className="flex-1 space-y-1">
+                <div className="space-y-1">
                   <p className="font-semibold text-card-foreground">{(workerData as any).profiles?.full_name}</p>
                   <p className="text-sm text-muted-foreground">{(workerData as any).profiles?.phone}</p>
                   {workerData.verified && <Badge className="bg-success text-success-foreground">Verified</Badge>}
                 </div>
               </div>
-              <div className="grid md:grid-cols-2 gap-4">
+
+              <div className="grid gap-4 md:grid-cols-2">
                 <div>
                   <Label>Profession</Label>
-                  <Input value={profession} onChange={e => setProfession(e.target.value)} className="mt-1.5" />
+                  <Input value={profession} onChange={(e) => setProfession(e.target.value)} className="mt-1.5" />
                 </div>
                 <div>
                   <Label>Years of Experience</Label>
-                  <Input type="number" value={experience} onChange={e => setExperience(e.target.value)} className="mt-1.5" />
+                  <Input type="number" value={experience} onChange={(e) => setExperience(e.target.value)} className="mt-1.5" />
                 </div>
                 <div className="md:col-span-2">
                   <Label>About</Label>
-                  <Textarea value={description} onChange={e => setDescription(e.target.value)} className="mt-1.5" rows={3} />
+                  <Textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={3} className="mt-1.5" />
                 </div>
                 <div>
                   <Label>City</Label>
-                  <Input value={city} onChange={e => setCity(e.target.value)} className="mt-1.5" />
+                  <Input value={city} onChange={(e) => setCity(e.target.value)} className="mt-1.5" />
                 </div>
                 <div>
                   <Label>Service Areas (comma-separated)</Label>
-                  <Input value={serviceAreas} onChange={e => setServiceAreas(e.target.value)} placeholder="DHA, Gulberg, Model Town" className="mt-1.5" />
+                  <Input value={serviceAreas} onChange={(e) => setServiceAreas(e.target.value)} className="mt-1.5" />
                 </div>
               </div>
 
-              <div className="flex items-center justify-between p-3 bg-muted rounded-lg mt-4">
+              <div className="mt-4 flex items-center justify-between rounded-xl bg-muted p-3">
                 <div>
                   <p className="text-sm font-medium text-foreground">Availability</p>
-                  <p className="text-xs text-muted-foreground">{available ? "You're visible to customers" : "You're hidden from search"}</p>
+                  <p className="text-xs text-muted-foreground">{available ? "You are visible to customers" : "You are hidden from search"}</p>
                 </div>
                 <Switch checked={available} onCheckedChange={setAvailable} />
               </div>
 
-              <div className="flex gap-3 mt-4">
+              <div className="mt-4 flex flex-wrap gap-3">
                 <Button onClick={handleSave} disabled={saving} className="gap-2">
-                  <Save className="w-4 h-4" /> {saving ? "Saving..." : "Save Changes"}
+                  <Save className="h-4 w-4" /> {saving ? "Saving..." : "Save changes"}
                 </Button>
                 <Button variant="outline" onClick={handleUpdateLocation} disabled={updatingLocation} className="gap-2">
-                  <Navigation className="w-4 h-4" /> {updatingLocation ? "Updating..." : "Update Location"}
+                  <Navigation className="h-4 w-4" /> {updatingLocation ? "Updating..." : "Update location"}
                 </Button>
               </div>
 
               {workerData.latitude && workerData.longitude && (
-                <p className="text-xs text-muted-foreground flex items-center gap-1 mt-3">
-                  <MapPin className="w-3 h-3" /> Location: {workerData.latitude.toFixed(4)}, {workerData.longitude.toFixed(4)}
+                <p className="mt-3 flex items-center gap-1 text-xs text-muted-foreground">
+                  <MapPin className="h-3 w-3" /> {workerData.latitude.toFixed(4)}, {workerData.longitude.toFixed(4)}
                 </p>
               )}
             </div>
           </TabsContent>
 
-          <TabsContent value="blood">
-            <BloodDonationCard />
-          </TabsContent>
-
-          {/* Bookings Tab */}
-          <TabsContent value="bookings">
-            <div className="space-y-6">
-              {pendingBookings.length > 0 && (
-                <div>
-                  <h3 className="font-semibold text-foreground mb-3">Pending Requests ({pendingBookings.length})</h3>
-                  <div className="space-y-3">
-                    {pendingBookings.map((b: any) => (
-                      <div key={b.id} className="bg-card border border-warning/30 rounded-xl p-4">
-                        <div className="flex items-start justify-between">
-                          <div>
-                            <p className="font-medium text-card-foreground">{b.profiles?.full_name || "Customer"}</p>
-                            <p className="text-sm text-muted-foreground mt-1">{b.service_description}</p>
-                            <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
-                              <span className="flex items-center gap-1"><Calendar className="w-3 h-3" /> {new Date(b.booking_date).toLocaleDateString()}</span>
-                              <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> {b.booking_time}</span>
-                            </div>
-                          </div>
-                          <div className="flex gap-2">
-                            <Button size="sm" className="gap-1" onClick={() => handleBookingAction(b.id, "confirmed")}>
-                              <CheckCircle className="w-3 h-3" /> Accept
-                            </Button>
-                            <Button size="sm" variant="outline" className="gap-1" onClick={() => handleBookingAction(b.id, "rejected")}>
-                              <XCircle className="w-3 h-3" /> Decline
-                            </Button>
+          <TabsContent value="bookings" className="space-y-4">
+            {pendingBookings.length > 0 && (
+              <div className="rounded-2xl border bg-card p-5">
+                <h3 className="mb-3 font-semibold text-card-foreground">Pending requests</h3>
+                <div className="space-y-3">
+                  {pendingBookings.map((b: any) => (
+                    <div key={b.id} className="rounded-xl border border-warning/40 bg-muted/30 p-4">
+                      <div className="flex flex-wrap items-start justify-between gap-3">
+                        <div>
+                          <p className="font-medium text-card-foreground">{b.profiles?.full_name || "Customer"}</p>
+                          <p className="mt-1 text-sm text-muted-foreground">{b.service_description}</p>
+                          <div className="mt-2 flex items-center gap-3 text-xs text-muted-foreground">
+                            <span className="flex items-center gap-1"><Calendar className="h-3 w-3" /> {new Date(b.booking_date).toLocaleDateString()}</span>
+                            <span className="flex items-center gap-1"><Clock className="h-3 w-3" /> {b.booking_time}</span>
                           </div>
                         </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {confirmedBookings.length > 0 && (
-                <div>
-                  <h3 className="font-semibold text-foreground mb-3">Upcoming ({confirmedBookings.length})</h3>
-                  <div className="space-y-3">
-                    {confirmedBookings.map((b: any) => (
-                      <div key={b.id} className="bg-card border rounded-xl p-4">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <p className="font-medium text-card-foreground">{b.profiles?.full_name || "Customer"}</p>
-                            <p className="text-sm text-muted-foreground">{b.service_description}</p>
-                            <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
-                              <span className="flex items-center gap-1"><Calendar className="w-3 h-3" /> {new Date(b.booking_date).toLocaleDateString()}</span>
-                              <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> {b.booking_time}</span>
-                            </div>
-                          </div>
-                          <Badge className="bg-success text-success-foreground">Confirmed</Badge>
+                        <div className="flex gap-2">
+                          <Button size="sm" onClick={() => handleBookingAction(b.id, "confirmed")} className="gap-1">
+                            <CheckCircle className="h-3 w-3" /> Accept
+                          </Button>
+                          <Button size="sm" variant="outline" onClick={() => handleBookingAction(b.id, "rejected")} className="gap-1">
+                            <XCircle className="h-3 w-3" /> Decline
+                          </Button>
                         </div>
                       </div>
-                    ))}
-                  </div>
+                    </div>
+                  ))}
                 </div>
-              )}
+              </div>
+            )}
 
-              {bookings.length === 0 && (
-                <div className="text-center py-12">
-                  <Calendar className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
-                  <p className="text-muted-foreground">No bookings yet.</p>
+            <div className="rounded-2xl border bg-card p-5">
+              <h3 className="mb-3 font-semibold text-card-foreground">Confirmed and past bookings</h3>
+              {bookings.length === 0 ? (
+                <p className="text-sm text-muted-foreground">No bookings yet.</p>
+              ) : (
+                <div className="space-y-3">
+                  {bookings.map((b: any) => (
+                    <div key={b.id} className="rounded-xl bg-muted/40 p-4">
+                      <div className="flex items-center justify-between gap-3">
+                        <div>
+                          <p className="font-medium text-card-foreground">{b.profiles?.full_name || "Customer"}</p>
+                          <p className="text-sm text-muted-foreground">{b.service_description}</p>
+                        </div>
+                        <Badge className={b.status === "confirmed" ? "bg-success text-success-foreground" : "bg-muted text-muted-foreground"}>{b.status}</Badge>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               )}
             </div>
           </TabsContent>
 
-          {/* Messages Tab */}
           <TabsContent value="messages">
-            <div className="bg-card border rounded-2xl p-6">
-              <h2 className="font-semibold text-card-foreground mb-4">Messages</h2>
+            <div className="rounded-2xl border bg-card p-6">
+              <h2 className="mb-4 font-semibold text-card-foreground">Messages</h2>
               {conversations.length === 0 ? (
-                <div className="text-center py-12">
-                  <MessageSquare className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
-                  <p className="text-muted-foreground">No conversations yet.</p>
+                <div className="py-10 text-center">
+                  <MessageSquare className="mx-auto mb-3 h-10 w-10 text-muted-foreground" />
+                  <p className="text-sm text-muted-foreground">No conversations yet.</p>
                 </div>
               ) : (
                 <div className="space-y-2">
                   {conversations.map((c: any) => (
-                    <Link
-                      key={c.userId}
-                      to={`/chat/${c.userId}`}
-                      className="flex items-center gap-4 p-4 rounded-xl bg-muted/50 hover:bg-muted transition-colors"
-                    >
-                      <div className="w-10 h-10 rounded-full bg-accent flex items-center justify-center text-sm font-bold text-accent-foreground shrink-0">
+                    <Link key={c.userId} to={`/chat/${c.userId}`} className="flex items-center gap-4 rounded-xl bg-muted/50 p-4 transition-colors hover:bg-muted">
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-accent text-sm font-bold text-accent-foreground">
                         {c.name.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2)}
                       </div>
-                      <div className="flex-1 min-w-0">
+                      <div className="min-w-0 flex-1">
                         <p className="font-medium text-card-foreground">{c.name}</p>
-                        <p className="text-sm text-muted-foreground truncate">{c.lastMessage}</p>
+                        <p className="truncate text-sm text-muted-foreground">{c.lastMessage}</p>
                       </div>
-                      <span className="text-xs text-muted-foreground shrink-0">
-                        {new Date(c.time).toLocaleDateString()}
-                      </span>
+                      <span className="text-xs text-muted-foreground">{new Date(c.time).toLocaleDateString()}</span>
                     </Link>
                   ))}
                 </div>
@@ -427,33 +476,34 @@ const WorkerDashboard = () => {
             </div>
           </TabsContent>
 
-          {/* Reviews Tab */}
           <TabsContent value="reviews">
-            <div className="bg-card border rounded-2xl p-6">
-              <h2 className="font-semibold text-card-foreground mb-4">Reviews ({reviews.length})</h2>
+            <div className="rounded-2xl border bg-card p-6">
+              <h2 className="mb-4 font-semibold text-card-foreground">Reviews ({reviews.length})</h2>
               {reviews.length === 0 ? (
                 <p className="text-sm text-muted-foreground">No reviews yet.</p>
               ) : (
                 <div className="space-y-3">
                   {reviews.map((r: any) => (
-                    <div key={r.id} className="p-4 rounded-xl bg-muted/50">
-                      <div className="flex items-center justify-between mb-1">
+                    <div key={r.id} className="rounded-xl bg-muted/50 p-4">
+                      <div className="mb-1 flex items-center justify-between">
                         <span className="text-sm font-medium text-card-foreground">{r.profiles?.full_name || "Anonymous"}</span>
                         <span className="text-xs text-muted-foreground">{new Date(r.created_at).toLocaleDateString()}</span>
                       </div>
                       <StarRating rating={r.rating} size={14} />
-                      {r.review_text && <p className="text-sm text-muted-foreground mt-2">{r.review_text}</p>}
+                      {r.review_text && <p className="mt-2 text-sm text-muted-foreground">{r.review_text}</p>}
                     </div>
                   ))}
                 </div>
               )}
             </div>
           </TabsContent>
-        </Tabs>
-      </div>
 
-      <Footer />
-    </div>
+          <TabsContent value="blood">
+            <BloodDonationCard />
+          </TabsContent>
+        </Tabs>
+      </section>
+    </AppLayout>
   );
 };
 
