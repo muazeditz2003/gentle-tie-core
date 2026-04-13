@@ -24,6 +24,16 @@ const WorkerProfile = () => {
   const [reviewRating, setReviewRating] = useState(5);
   const [submittingReview, setSubmittingReview] = useState(false);
 
+  const trackEvent = async (eventType: "profile_view" | "contact_click" | "conversion") => {
+    if (!id || !dbWorker) return;
+    await supabase.from("service_analytics_events").insert({
+      service_id: id,
+      owner_user_id: dbWorker.user_id,
+      event_type: eventType,
+      source: "app",
+    } as any);
+  };
+
   const { data: dbWorker } = useQuery({
     queryKey: ["worker", id],
     queryFn: async () => {
@@ -105,6 +115,8 @@ const WorkerProfile = () => {
 
   const initials = worker.name.split(" ").map(n => n[0]).join("");
 
+  void trackEvent("profile_view");
+
   return (
     <AppLayout title="Service Profile" subtitle="Trust signals, reviews, and quick booking in one place.">
       <div className="mx-auto max-w-3xl">
@@ -159,8 +171,8 @@ const WorkerProfile = () => {
 
           <div className="mt-6 hidden gap-3 md:flex md:flex-wrap">
              {user ? (
-               <Button variant="hero" className="flex-1 gap-2" asChild>
-                 <a href={`tel:${worker.phone}`}><Phone className="w-4 h-4" /> Call Now</a>
+                 <Button variant="hero" className="flex-1 gap-2" asChild>
+                  <a href={`tel:${worker.phone}`} onClick={() => void trackEvent("contact_click")}><Phone className="w-4 h-4" /> Call Now</a>
                </Button>
              ) : (
                <AuthRequiredDialog title="Log in to contact" description="Please log in or sign up to contact this service.">
@@ -170,19 +182,19 @@ const WorkerProfile = () => {
                </AuthRequiredDialog>
              )}
              {user ? (
-               <Button variant="outline" className="flex-1 gap-2" onClick={handleMessage}>
+                <Button variant="outline" className="flex-1 gap-2" onClick={() => { void trackEvent("contact_click"); handleMessage(); }}>
                  <MessageSquare className="w-4 h-4" /> Contact
                </Button>
              ) : (
                <AuthRequiredDialog title="Log in to contact" description="Please log in or sign up to contact this service.">
-                 <Button variant="outline" className="flex-1 gap-2">
+                <Button variant="outline" className="flex-1 gap-2" onClick={() => void trackEvent("contact_click")}>
                    <MessageSquare className="w-4 h-4" /> Contact
                  </Button>
                </AuthRequiredDialog>
              )}
              {user && (
               <BookingDialog workerId={worker.id} workerName={worker.name}>
-                <Button variant="default" className="flex-1 gap-2">
+                <Button variant="default" className="flex-1 gap-2" onClick={() => void trackEvent("conversion")}>
                   <CalendarPlus className="w-4 h-4" /> Book Now
                 </Button>
               </BookingDialog>
@@ -251,14 +263,14 @@ const WorkerProfile = () => {
               </Button>
             ) : (
               <AuthRequiredDialog title="Log in to contact" description="Please log in or sign up to contact this service.">
-                <Button variant="outline" className="rounded-xl">
+                <Button variant="outline" className="rounded-xl" onClick={() => void trackEvent("contact_click")}>
                   <MessageSquare className="mr-1 h-4 w-4" /> Contact
                 </Button>
               </AuthRequiredDialog>
             )}
             {user ? (
               <BookingDialog workerId={worker.id} workerName={worker.name}>
-                <Button className="w-full rounded-xl">Book Now</Button>
+                <Button className="w-full rounded-xl" onClick={() => void trackEvent("conversion")}>Book Now</Button>
               </BookingDialog>
             ) : (
               <AuthRequiredDialog title="Log in to book" description="Please log in or sign up to book this service.">
