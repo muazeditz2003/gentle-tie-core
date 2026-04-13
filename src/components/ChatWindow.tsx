@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Send } from "lucide-react";
+import { Paperclip, Send } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -92,7 +92,7 @@ const ChatWindow = ({ otherUserId, otherUserName }: Props) => {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="p-4 border-b bg-card">
+      <div className="p-4 border-b bg-card/90 backdrop-blur">
         <h3 className="font-semibold text-card-foreground">{otherUserName}</h3>
       </div>
 
@@ -102,7 +102,7 @@ const ChatWindow = ({ otherUserId, otherUserName }: Props) => {
           return (
             <div key={msg.id} className={`flex ${isMine ? "justify-end" : "justify-start"}`}>
               <div
-                className={`max-w-[75%] px-4 py-2 rounded-2xl text-sm ${
+                className={`max-w-[80%] px-4 py-2.5 rounded-2xl text-sm shadow-sm ${
                   isMine
                     ? "bg-primary text-primary-foreground rounded-br-md"
                     : "bg-muted text-foreground rounded-bl-md"
@@ -122,18 +122,21 @@ const ChatWindow = ({ otherUserId, otherUserName }: Props) => {
         )}
       </div>
 
-      <div className="p-4 border-t bg-card">
+      <div className="sticky bottom-0 p-3 border-t bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80">
         <form
           onSubmit={(e) => { e.preventDefault(); handleSend(); }}
           className="flex gap-2"
         >
+          <Button type="button" variant="outline" size="icon" className="rounded-xl">
+            <Paperclip className="w-4 h-4" />
+          </Button>
           <Input
             placeholder="Type a message..."
             value={text}
             onChange={(e) => setText(e.target.value)}
-            className="flex-1"
+            className="flex-1 rounded-xl"
           />
-          <Button type="submit" size="icon" disabled={!text.trim() || sending}>
+          <Button type="submit" size="icon" className="rounded-xl" disabled={!text.trim() || sending}>
             <Send className="w-4 h-4" />
           </Button>
         </form>
