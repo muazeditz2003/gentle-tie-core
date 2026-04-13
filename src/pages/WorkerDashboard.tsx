@@ -235,10 +235,10 @@ const WorkerDashboard = () => {
 
   if (!workerData) {
     return (
-      <AppLayout title="Worker Dashboard" subtitle="Create your worker profile to start receiving local jobs.">
+      <AppLayout title="Service Dashboard" subtitle="Create your service profile to start receiving local jobs.">
         <div className="rounded-2xl border bg-card p-8 text-center">
-          <p className="mb-4 text-muted-foreground">You don't have a worker profile yet.</p>
-          <Button onClick={() => navigate("/register?role=worker")}>Register as Worker</Button>
+          <p className="mb-4 text-muted-foreground">You don't have a service profile yet.</p>
+          <Button onClick={() => navigate("/register?role=worker")}>Register as Service</Button>
         </div>
       </AppLayout>
     );
@@ -246,7 +246,7 @@ const WorkerDashboard = () => {
 
   return (
     <AppLayout
-      title="Worker Dashboard"
+      title="Service Dashboard"
       subtitle="Manage bookings, profile and chats with a fast mobile-first workflow."
       action={
         <Button className="h-10 gap-2 rounded-xl" onClick={() => navigate("/discover")}>
@@ -311,7 +311,7 @@ const WorkerDashboard = () => {
                   <div className="space-y-2">
                     {pendingBookings.slice(0, 3).map((b: any) => (
                       <div key={b.id} className="rounded-xl bg-muted/50 p-3">
-                        <p className="text-sm font-medium text-card-foreground">{b.profiles?.full_name || "Customer"}</p>
+                        <p className="text-sm font-medium text-card-foreground">{b.profiles?.full_name || "User"}</p>
                         <p className="text-xs text-muted-foreground truncate">{b.service_description}</p>
                       </div>
                     ))}
@@ -326,7 +326,7 @@ const WorkerDashboard = () => {
                   <div className="space-y-2">
                     {confirmedBookings.slice(0, 3).map((b: any) => (
                       <div key={b.id} className="rounded-xl bg-muted/50 p-3">
-                        <p className="text-sm font-medium text-card-foreground">{b.profiles?.full_name || "Customer"}</p>
+                        <p className="text-sm font-medium text-card-foreground">{b.profiles?.full_name || "User"}</p>
                         <p className="text-xs text-muted-foreground">{new Date(b.booking_date).toLocaleDateString()} · {b.booking_time}</p>
                       </div>
                     ))}
@@ -338,7 +338,7 @@ const WorkerDashboard = () => {
 
           <TabsContent value="profile">
             <div className="rounded-2xl border bg-card p-6">
-              <h2 className="mb-4 font-semibold text-card-foreground">Edit worker profile</h2>
+              <h2 className="mb-4 font-semibold text-card-foreground">Edit service profile</h2>
               <div className="mb-6 flex items-start gap-4">
                 <AvatarUpload currentUrl={(workerData as any).profiles?.avatar_url} onUpload={handleAvatarUpload} />
                 <div className="space-y-1">
@@ -374,7 +374,7 @@ const WorkerDashboard = () => {
               <div className="mt-4 flex items-center justify-between rounded-xl bg-muted p-3">
                 <div>
                   <p className="text-sm font-medium text-foreground">Availability</p>
-                  <p className="text-xs text-muted-foreground">{available ? "You are visible to customers" : "You are hidden from search"}</p>
+                  <p className="text-xs text-muted-foreground">{available ? "You are visible to users" : "You are hidden from search"}</p>
                 </div>
                 <Switch checked={available} onCheckedChange={setAvailable} />
               </div>
@@ -405,7 +405,7 @@ const WorkerDashboard = () => {
                     <div key={b.id} className="rounded-xl border border-warning/40 bg-muted/30 p-4">
                       <div className="flex flex-wrap items-start justify-between gap-3">
                         <div>
-                          <p className="font-medium text-card-foreground">{b.profiles?.full_name || "Customer"}</p>
+                          <p className="font-medium text-card-foreground">{b.profiles?.full_name || "User"}</p>
                           <p className="mt-1 text-sm text-muted-foreground">{b.service_description}</p>
                           <div className="mt-2 flex items-center gap-3 text-xs text-muted-foreground">
                             <span className="flex items-center gap-1"><Calendar className="h-3 w-3" /> {new Date(b.booking_date).toLocaleDateString()}</span>
@@ -437,7 +437,7 @@ const WorkerDashboard = () => {
                     <div key={b.id} className="rounded-xl bg-muted/40 p-4">
                       <div className="flex items-center justify-between gap-3">
                         <div>
-                          <p className="font-medium text-card-foreground">{b.profiles?.full_name || "Customer"}</p>
+                          <p className="font-medium text-card-foreground">{b.profiles?.full_name || "User"}</p>
                           <p className="text-sm text-muted-foreground">{b.service_description}</p>
                         </div>
                         <Badge className={b.status === "confirmed" ? "bg-success text-success-foreground" : "bg-muted text-muted-foreground"}>{b.status}</Badge>

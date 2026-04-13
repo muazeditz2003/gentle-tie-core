@@ -38,7 +38,7 @@ const App = () => (
           <BrowserRouter>
             <Routes>
               <Route path="/" element={<Index />} />
-              <Route path="/discover" element={<ProtectedRoute><Discover /></ProtectedRoute>} />
+              <Route path="/discover" element={<Discover />} />
               <Route path="/worker/:id" element={<WorkerProfile />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />

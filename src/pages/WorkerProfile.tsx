@@ -13,6 +13,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useState } from "react";
 import { toast } from "sonner";
 import AppLayout from "@/components/AppLayout";
+import AuthRequiredDialog from "@/components/AuthRequiredDialog";
 
 const WorkerProfile = () => {
   const { id } = useParams();
@@ -100,15 +101,12 @@ const WorkerProfile = () => {
     }
   };
 
-  const handleMessage = () => {
-    if (!user) { toast.error("Please log in to message"); return; }
-    navigate(`/chat/${worker.userId}`);
-  };
+  const handleMessage = () => navigate(`/chat/${worker.userId}`);
 
   const initials = worker.name.split(" ").map(n => n[0]).join("");
 
   return (
-    <AppLayout title="Worker Profile" subtitle="Trust signals, reviews, and quick hiring in one place.">
+    <AppLayout title="Service Profile" subtitle="Trust signals, reviews, and quick booking in one place.">
       <div className="mx-auto max-w-3xl">
         <Link to="/discover" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-primary mb-6">
           <ArrowLeft className="w-4 h-4" /> Back to search
@@ -160,13 +158,29 @@ const WorkerProfile = () => {
           </div>
 
           <div className="mt-6 hidden gap-3 md:flex md:flex-wrap">
-            <Button variant="hero" className="flex-1 gap-2" asChild>
-              <a href={`tel:${worker.phone}`}><Phone className="w-4 h-4" /> Call Now</a>
-            </Button>
-            <Button variant="outline" className="flex-1 gap-2" onClick={handleMessage}>
-              <MessageSquare className="w-4 h-4" /> Message
-            </Button>
-            {user && (
+             {user ? (
+               <Button variant="hero" className="flex-1 gap-2" asChild>
+                 <a href={`tel:${worker.phone}`}><Phone className="w-4 h-4" /> Call Now</a>
+               </Button>
+             ) : (
+               <AuthRequiredDialog title="Log in to contact" description="Please log in or sign up to contact this service.">
+                 <Button variant="hero" className="flex-1 gap-2">
+                   <Phone className="w-4 h-4" /> Contact
+                 </Button>
+               </AuthRequiredDialog>
+             )}
+             {user ? (
+               <Button variant="outline" className="flex-1 gap-2" onClick={handleMessage}>
+                 <MessageSquare className="w-4 h-4" /> Contact
+               </Button>
+             ) : (
+               <AuthRequiredDialog title="Log in to contact" description="Please log in or sign up to contact this service.">
+                 <Button variant="outline" className="flex-1 gap-2">
+                   <MessageSquare className="w-4 h-4" /> Contact
+                 </Button>
+               </AuthRequiredDialog>
+             )}
+             {user && (
               <BookingDialog workerId={worker.id} workerName={worker.name}>
                 <Button variant="default" className="flex-1 gap-2">
                   <CalendarPlus className="w-4 h-4" /> Book Now
@@ -231,15 +245,25 @@ const WorkerProfile = () => {
 
         <div className="fixed inset-x-0 bottom-20 z-40 px-4 md:hidden">
           <div className="mx-auto grid max-w-md grid-cols-2 gap-2 rounded-2xl border bg-card/95 p-2 shadow-premium backdrop-blur-xl">
-            <Button variant="outline" className="rounded-xl" onClick={handleMessage}>
-              <MessageSquare className="mr-1 h-4 w-4" /> Message
-            </Button>
+            {user ? (
+              <Button variant="outline" className="rounded-xl" onClick={handleMessage}>
+                <MessageSquare className="mr-1 h-4 w-4" /> Contact
+              </Button>
+            ) : (
+              <AuthRequiredDialog title="Log in to contact" description="Please log in or sign up to contact this service.">
+                <Button variant="outline" className="rounded-xl">
+                  <MessageSquare className="mr-1 h-4 w-4" /> Contact
+                </Button>
+              </AuthRequiredDialog>
+            )}
             {user ? (
               <BookingDialog workerId={worker.id} workerName={worker.name}>
-                <Button className="w-full rounded-xl">Hire Now</Button>
+                <Button className="w-full rounded-xl">Book Now</Button>
               </BookingDialog>
             ) : (
-              <Button className="rounded-xl" onClick={() => navigate("/login")}>Hire Now</Button>
+              <AuthRequiredDialog title="Log in to book" description="Please log in or sign up to book this service.">
+                <Button className="rounded-xl">Book Now</Button>
+              </AuthRequiredDialog>
             )}
           </div>
         </div>

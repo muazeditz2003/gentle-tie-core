@@ -41,7 +41,7 @@ const UpgradeToWorker = () => {
 
       if (workerError) {
         if (workerError.message.includes("duplicate") || workerError.message.includes("unique")) {
-          toast.error("You already have a worker profile!");
+          toast.error("You already have a service profile!");
         } else {
           throw workerError;
         }
@@ -65,7 +65,7 @@ const UpgradeToWorker = () => {
         await supabase.from("profiles").update({ city: city.trim() }).eq("user_id", user.id);
       }
 
-      toast.success("You're now registered as a worker! Your profile is live.");
+      toast.success("You're now registered as a service! Your profile is live.");
       queryClient.invalidateQueries({ queryKey: ["user_role"] });
       queryClient.invalidateQueries({ queryKey: ["workers"] });
       setOpen(false);
@@ -89,7 +89,7 @@ const UpgradeToWorker = () => {
                 <Briefcase className="w-5 h-5 text-primary-foreground" />
               </div>
               <div>
-                <p className="font-semibold text-primary-foreground">Become a Worker</p>
+                <p className="font-semibold text-primary-foreground">Become a Service</p>
                 <p className="text-xs text-primary-foreground/70">Start offering your services on the platform</p>
               </div>
             </div>
@@ -99,7 +99,7 @@ const UpgradeToWorker = () => {
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Register as a Worker</DialogTitle>
+          <DialogTitle>Register as a Service</DialogTitle>
         </DialogHeader>
         <p className="text-sm text-muted-foreground mb-4">
           Fill in your professional details to start appearing in search results. Your existing account info will be kept.
@@ -122,7 +122,7 @@ const UpgradeToWorker = () => {
             <Input placeholder="DHA, Gulberg, Model Town" className="mt-1.5" value={serviceArea} onChange={e => setServiceArea(e.target.value)} />
           </div>
           <Button onClick={handleUpgrade} disabled={loading} className="w-full bg-gradient-brand text-primary-foreground hover:opacity-90 rounded-xl">
-            {loading ? "Setting up..." : "Activate Worker Profile"}
+            {loading ? "Setting up..." : "Activate Service Profile"}
           </Button>
         </div>
       </DialogContent>

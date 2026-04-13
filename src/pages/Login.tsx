@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Mail, Lock, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,6 +11,7 @@ import logoImg from "@/assets/logo.png";
 
 const Login = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { t } = useI18n();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -49,7 +50,8 @@ const Login = () => {
     setLoading(false);
     toast.success("Logged in successfully!");
 
-    navigate("/", { replace: true });
+    const redirect = searchParams.get("redirect") || "/";
+    navigate(redirect, { replace: true });
   };
 
   return (

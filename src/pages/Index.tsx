@@ -63,7 +63,7 @@ const Index = () => {
             const rev = reviewMap[w.id];
             return {
               id: w.id,
-              name: profile?.full_name || "Worker",
+                name: profile?.full_name || "Service",
               profession: w.profession,
               rating: rev ? Math.round((rev.sum / rev.count) * 10) / 10 : 0,
               reviewCount: rev?.count || 0,
@@ -139,7 +139,7 @@ const Index = () => {
           </div>
 
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-            <Button className="h-11 justify-start rounded-xl" onClick={() => navigate("/discover")}>Find a Worker</Button>
+              <Button className="h-11 justify-start rounded-xl" onClick={() => navigate("/discover")}>Find a Service</Button>
             <Button variant="outline" className="h-11 justify-start rounded-xl" onClick={() => navigate("/blood-donors")}>Request Urgent Help</Button>
             <Button variant="secondary" className="h-11 justify-start rounded-xl" onClick={() => navigate("/discover")}>Browse Categories</Button>
           </div>
@@ -186,7 +186,7 @@ const Index = () => {
 
         <motion.section initial="hidden" animate="visible" variants={fadeUp} custom={3}>
           <div className="mb-3 flex items-center justify-between">
-            <h2 className="text-lg font-bold text-foreground">Nearby Workers</h2>
+            <h2 className="text-lg font-bold text-foreground">Nearby Services</h2>
             <Button variant="ghost" size="sm" className="gap-1" onClick={() => navigate("/discover")}>View all <ArrowRight className="h-4 w-4" /></Button>
           </div>
           {topWorkers.length === 0 ? (
@@ -211,7 +211,7 @@ const Index = () => {
               <p className="mb-4 text-sm text-muted-foreground">Sign up to request fast service, respond to urgent needs, and build trust through real local connections.</p>
               <div className="flex flex-wrap gap-3">
                 <Button onClick={() => navigate("/register")}>Get Started</Button>
-                <Button variant="outline" onClick={() => navigate("/register?role=worker")}>Join as Worker</Button>
+                <Button variant="outline" onClick={() => navigate("/register?role=worker")}>Join as Service</Button>
               </div>
             </div>
             <div className="grid grid-cols-2 gap-3">

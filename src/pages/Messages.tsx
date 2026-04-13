@@ -76,7 +76,7 @@ const Messages = () => {
           <div className="rounded-2xl border bg-muted/30 py-16 text-center">
             <MessageSquare className="mx-auto mb-2 h-9 w-9 text-muted-foreground" />
             <p className="font-medium text-foreground">No conversations yet</p>
-            <p className="text-sm text-muted-foreground">Start by messaging a worker from Explore.</p>
+            <p className="text-sm text-muted-foreground">Start by messaging a service from Explore.</p>
           </div>
         ) : (
           <div className="space-y-2">
