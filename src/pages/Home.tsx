@@ -1,24 +1,24 @@
 import { useNavigate } from "react-router-dom";
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import {
-  Search,
-  Star,
+  AlertTriangle,
   ArrowRight,
+  Map,
   MapPin,
-  TrendingUp,
-  Clock,
+  Navigation,
+  Search,
   Sparkles,
-  Filter,
+  Star,
+  TrendingUp,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import ServiceCategoryCard from "@/components/ServiceCategoryCard";
 import WorkerCard from "@/components/WorkerCard";
-import WelcomeBanner from "@/components/WelcomeBanner";
-import BloodDonationBanner from "@/components/BloodDonationBanner";
 import ActiveBloodRequests from "@/components/ActiveBloodRequests";
 import { serviceCategories } from "@/data/mockData";
 import { supabase } from "@/integrations/supabase/client";
@@ -43,6 +43,7 @@ const Home = () => {
   const [topWorkers, setTopWorkers] = useState<Worker[]>([]);
   const [recentWorkers, setRecentWorkers] = useState<Worker[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showMapView, setShowMapView] = useState(false);
 
   const firstName = user?.user_metadata?.full_name?.split(" ")[0] || "there";
 
@@ -137,15 +138,21 @@ const Home = () => {
     return "Good evening";
   };
 
+  const quickCategories = [
+    { id: "electrician", name: "Electrician", icon: "⚡" },
+    { id: "plumber", name: "Plumber", icon: "🔧" },
+    { id: "tutor", name: "Tutor", icon: "📚" },
+    { id: "delivery", name: "Delivery", icon: "🛵" },
+    { id: "blood-donors", name: "Blood Donation", icon: "🩸", urgent: true },
+  ];
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
 
-      {/* Greeting + Search Hero */}
-      <section className="relative overflow-hidden border-b bg-gradient-to-b from-accent/60 to-background">
+      <section className="relative overflow-hidden border-b bg-gradient-to-b from-accent/50 to-background">
         <div className="absolute -top-32 -right-32 w-[400px] h-[400px] rounded-full bg-primary/5 blur-3xl" />
-        <div className="container mx-auto px-4 pt-10 pb-12">
-          <WelcomeBanner firstName={firstName} />
+        <div className="container mx-auto px-4 pt-7 pb-6 md:pt-10 md:pb-10">
           <motion.div
             initial="hidden"
             animate="visible"
@@ -158,21 +165,59 @@ const Home = () => {
                 {greeting()}, {firstName}!
               </span>
             </div>
-            <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight text-foreground mb-2">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold tracking-tight text-foreground mb-2 leading-tight">
               What do you need help with?
             </h1>
-            <p className="text-muted-foreground mb-8 max-w-lg">
+            <p className="text-sm md:text-base text-muted-foreground mb-6 max-w-lg">
               Search for services or browse categories to find the perfect
               professional near you.
             </p>
           </motion.div>
+
+          <div className="sticky top-16 z-30 -mx-1 px-1 pb-3 bg-background/90 backdrop-blur supports-[backdrop-filter]:bg-background/70">
+            <motion.div
+              initial="hidden"
+              animate="visible"
+              variants={fadeUp}
+              custom={1}
+              className="flex gap-2"
+            >
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                <Input
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Find services near you..."
+                  className="pl-10 h-12 text-base rounded-2xl border-border bg-card shadow-premium"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && search.trim()) {
+                      navigate(`/discover?search=${encodeURIComponent(search)}`);
+                    }
+                  }}
+                />
+              </div>
+              <Button
+                size="icon"
+                className="h-12 w-12 rounded-2xl bg-gradient-brand text-primary-foreground"
+                onClick={() =>
+                  navigate(
+                    search.trim()
+                      ? `/discover?search=${encodeURIComponent(search)}`
+                      : "/discover"
+                  )
+                }
+              >
+                <Search className="w-5 h-5" />
+              </Button>
+            </motion.div>
+          </div>
 
           <motion.div
             initial="hidden"
             animate="visible"
             variants={fadeUp}
             custom={1}
-            className="flex gap-3 max-w-2xl"
+            className="hidden md:flex gap-3 max-w-2xl"
           >
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
@@ -204,38 +249,35 @@ const Home = () => {
             </Button>
           </motion.div>
 
-          {/* Quick action chips */}
           <motion.div
             initial="hidden"
             animate="visible"
             variants={fadeUp}
             custom={2}
-            className="flex flex-wrap gap-2 mt-6"
+            className="mt-5"
           >
-            {["Plumber", "Electrician", "Carpenter", "Cleaner", "Mechanic"].map(
-              (s) => (
+            <div className="flex gap-2 overflow-x-auto pb-1">
+              {quickCategories.map((c) => (
                 <button
-                  key={s}
-                  onClick={() =>
-                    navigate(
-                      `/discover?search=${encodeURIComponent(s.toLowerCase())}`
-                    )
-                  }
-                  className="px-4 py-1.5 rounded-full text-sm font-medium bg-card border border-border text-muted-foreground hover:border-primary/40 hover:text-primary transition-colors"
+                  key={c.id}
+                  onClick={() => navigate(c.id === "blood-donors" ? "/blood-donors" : `/discover?category=${c.id}`)}
+                  className="tap-feedback shrink-0 inline-flex items-center gap-2 rounded-2xl border border-border bg-card px-3.5 py-2 text-xs font-semibold text-card-foreground"
                 >
-                  {s}
+                  <span>{c.icon}</span>
+                  <span>{c.name}</span>
+                  {c.urgent && (
+                    <Badge variant="destructive" className="text-[10px] px-2 py-0 rounded-full">Urgent</Badge>
+                  )}
                 </button>
-              )
-            )}
+              ))}
+            </div>
           </motion.div>
         </div>
       </section>
 
-      {/* Categories */}
-      <section className="container mx-auto px-4 py-12">
+      <section className="container mx-auto px-4 py-8 md:py-12">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-2">
-            <Filter className="w-5 h-5 text-primary" />
             <h2 className="text-xl md:text-2xl font-bold text-foreground">
               Browse Categories
             </h2>
@@ -260,8 +302,7 @@ const Home = () => {
         </div>
       </section>
 
-      {/* Top Rated Workers */}
-      <section className="bg-accent/30 py-12">
+      <section className="bg-accent/30 py-8 md:py-12">
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-2">
@@ -279,7 +320,20 @@ const Home = () => {
               See All <ArrowRight className="w-4 h-4" />
             </Button>
           </div>
-          {loading ? (
+          <div className="mb-4 flex items-center justify-between">
+            <p className="text-sm text-muted-foreground">{filteredRecent.length} nearby workers</p>
+            <Button variant="outline" size="sm" className="gap-1.5 rounded-full" onClick={() => setShowMapView((v) => !v)}>
+              <Map className="w-3.5 h-3.5" /> {showMapView ? "List" : "Map"} View
+            </Button>
+          </div>
+
+          {showMapView ? (
+            <div className="rounded-2xl border bg-card p-8 text-center">
+              <Navigation className="w-9 h-9 text-primary mx-auto mb-3" />
+              <p className="font-semibold text-card-foreground mb-1">Map preview</p>
+              <p className="text-sm text-muted-foreground">Toggle back to list to browse and hire quickly.</p>
+            </div>
+          ) : loading ? (
             <div className="grid md:grid-cols-2 gap-4">
               {[1, 2, 3, 4].map((i) => (
                 <div
@@ -289,7 +343,7 @@ const Home = () => {
               ))}
             </div>
           ) : topWorkers.length > 0 ? (
-            <div className="grid md:grid-cols-2 gap-4">
+            <div className="grid gap-3 md:grid-cols-2 md:gap-4">
               {topWorkers.map((w, i) => (
                 <WorkerCard key={w.id} worker={w} index={i} />
               ))}
@@ -304,12 +358,10 @@ const Home = () => {
         </div>
       </section>
 
-      {/* Recently Available */}
       {filteredRecent.length > 0 && (
-        <section className="container mx-auto px-4 py-12">
+        <section className="container mx-auto px-4 py-8 md:py-12">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-2">
-              <Clock className="w-5 h-5 text-primary" />
               <h2 className="text-xl md:text-2xl font-bold text-foreground">
                 {search.trim()
                   ? `Results for "${search}"`
@@ -317,7 +369,7 @@ const Home = () => {
               </h2>
             </div>
           </div>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3 md:gap-4">
             {filteredRecent.map((w, i) => (
               <WorkerCard key={w.id} worker={w} index={i} />
             ))}
@@ -325,16 +377,17 @@ const Home = () => {
         </section>
       )}
 
-      {/* Blood Donation Banner */}
-      <section className="container mx-auto px-4 py-10">
-        <BloodDonationBanner />
+      <section className="container mx-auto px-4 py-5 md:py-8">
+        <div className="flex items-center gap-2 mb-3">
+          <AlertTriangle className="w-4 h-4 text-destructive" />
+          <h2 className="text-lg md:text-xl font-bold text-foreground">Urgent help requests</h2>
+        </div>
+        <p className="text-sm text-muted-foreground mb-4">Respond fast to nearby blood donation emergencies.</p>
       </section>
 
-      {/* Active Blood Requests */}
       <ActiveBloodRequests />
 
-      {/* Quick CTA */}
-      <section className="container mx-auto px-4 py-10">
+      <section className="container mx-auto px-4 py-8 md:py-10">
         <div className="rounded-2xl bg-gradient-brand p-8 md:p-12 text-center relative overflow-hidden">
           <div className="absolute top-0 right-0 w-64 h-64 bg-primary-foreground/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
           <div className="relative">
@@ -346,7 +399,7 @@ const Home = () => {
               Use our AI assistant to describe your problem and get matched with
               the best professional for the job.
             </p>
-            <p className="text-sm text-primary-foreground/60">
+             <p className="text-sm text-primary-foreground/70">
               Click the chat icon in the bottom-right corner to get started →
             </p>
           </div>
