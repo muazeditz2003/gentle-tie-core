@@ -1,7 +1,7 @@
 import { useNavigate, Link } from "react-router-dom";
 import { MessageSquare, Search } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useMemo, useState } from "react";
 import { Input } from "@/components/ui/input";
@@ -11,6 +11,7 @@ import { fetchConversationSummaries } from "@/lib/messages";
 const Messages = () => {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
 
   useEffect(() => {
@@ -35,7 +36,7 @@ const Messages = () => {
           const m = payload.new || payload.old;
           if (!m) return;
           if (m.sender_id === user.id || m.receiver_id === user.id) {
-            void fetchConversationSummaries(user.id);
+            queryClient.invalidateQueries({ queryKey: ["conversations", user.id] });
           }
         },
       );
