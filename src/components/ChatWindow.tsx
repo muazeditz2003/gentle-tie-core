@@ -44,7 +44,7 @@ const ChatWindow = ({ otherUserId, otherUserName, backLink }: Props) => {
   const { data: initialMessages = [], isLoading, error, refetch } = useQuery({
     queryKey: ["messages", user?.id, otherUserId],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from("messages")
         .select("*")
         .or(conversationFilter)
@@ -128,7 +128,7 @@ const ChatWindow = ({ otherUserId, otherUserName, backLink }: Props) => {
 
     if (unseenIds.length === 0) return;
 
-    supabase
+    (supabase as any)
       .from("messages")
       .update({ status: "seen", seen_at: new Date().toISOString() })
       .in("id", unseenIds)
@@ -158,7 +158,7 @@ const ChatWindow = ({ otherUserId, otherUserName, backLink }: Props) => {
       ]);
     }
 
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from("messages")
       .insert({
         sender_id: user.id,
@@ -212,7 +212,7 @@ const ChatWindow = ({ otherUserId, otherUserName, backLink }: Props) => {
     const oldest = messages[0]?.created_at;
     const prevHeight = scrollRef.current?.scrollHeight || 0;
 
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from("messages")
       .select("*")
       .or(conversationFilter)
