@@ -45,7 +45,7 @@ const Messages = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user]);
+  }, [user, queryClient]);
 
   const filteredConversations = useMemo(() => {
     if (!search.trim()) return conversations;
