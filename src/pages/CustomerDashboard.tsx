@@ -16,6 +16,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useUserRole } from "@/hooks/useUserRole";
+import { fetchConversationSummaries } from "@/lib/messages";
 
 const CustomerDashboard = () => {
   const navigate = useNavigate();
@@ -35,27 +36,9 @@ const CustomerDashboard = () => {
 
   const { data: conversations = [] } = useQuery({
     queryKey: ["conversations", user?.id],
-    queryFn: async () => {
-      const { data: sent } = await supabase.from("messages").select("receiver_id, created_at, message_text").eq("sender_id", user!.id).order("created_at", { ascending: false });
-      const { data: received } = await supabase.from("messages").select("sender_id, created_at, message_text").eq("receiver_id", user!.id).order("created_at", { ascending: false });
-
-      const userMap = new Map<string, { lastMessage: string; time: string }>();
-      [...(sent || []), ...(received || [])].forEach((m: any) => {
-        const otherId = m.receiver_id || m.sender_id;
-        if (!userMap.has(otherId)) userMap.set(otherId, { lastMessage: m.message_text, time: m.created_at });
-      });
-
-      const ids = Array.from(userMap.keys());
-      if (!ids.length) return [];
-      const { data: profiles } = await supabase.from("profiles").select("user_id, full_name, avatar_url").in("user_id", ids);
-
-      return ids.map(id => {
-        const p = profiles?.find((pr: any) => pr.user_id === id);
-        const info = userMap.get(id)!;
-        return { userId: id, name: p?.full_name || "Unknown", avatarUrl: p?.avatar_url, lastMessage: info.lastMessage, time: info.time };
-      });
-    },
+    queryFn: async () => fetchConversationSummaries(user!.id),
     enabled: !!user,
+    refetchInterval: 5000,
   });
 
   const { data: myBookings = [] } = useQuery({

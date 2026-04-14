@@ -92,6 +92,45 @@ export type Database = {
         }
         Relationships: []
       }
+      messages: {
+        Row: {
+          conversation_key: string | null
+          created_at: string
+          delivered_at: string | null
+          id: string
+          message_text: string
+          receiver_id: string
+          seen_at: string | null
+          sender_id: string
+          status: Database["public"]["Enums"]["message_status"]
+          updated_at: string
+        }
+        Insert: {
+          conversation_key?: string | null
+          created_at?: string
+          delivered_at?: string | null
+          id?: string
+          message_text: string
+          receiver_id: string
+          seen_at?: string | null
+          sender_id: string
+          status?: Database["public"]["Enums"]["message_status"]
+          updated_at?: string
+        }
+        Update: {
+          conversation_key?: string | null
+          created_at?: string
+          delivered_at?: string | null
+          id?: string
+          message_text?: string
+          receiver_id?: string
+          seen_at?: string | null
+          sender_id?: string
+          status?: Database["public"]["Enums"]["message_status"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
       native_ads: {
         Row: {
           ad_type: string
@@ -375,6 +414,7 @@ export type Database = {
       app_role: "customer" | "worker" | "admin"
       boost_status: "pending" | "active" | "expired" | "rejected"
       boost_type: "featured_listing" | "priority_ranking" | "urgent_boost"
+      message_status: "sent" | "delivered" | "seen" | "failed"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -511,6 +551,7 @@ export const Constants = {
       app_role: ["customer", "worker", "admin"],
       boost_status: ["pending", "active", "expired", "rejected"],
       boost_type: ["featured_listing", "priority_ranking", "urgent_boost"],
+      message_status: ["sent", "delivered", "seen", "failed"],
     },
   },
 } as const

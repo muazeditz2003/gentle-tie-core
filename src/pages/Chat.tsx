@@ -1,5 +1,4 @@
-import { useParams, Link } from "react-router-dom";
-import { ArrowLeft } from "lucide-react";
+import { useParams } from "react-router-dom";
 import ChatWindow from "@/components/ChatWindow";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery } from "@tanstack/react-query";
@@ -33,11 +32,12 @@ const Chat = () => {
   return (
     <AppLayout title="Chat" subtitle={`Conversation with ${otherProfile?.full_name || "Client"}`}>
       <div className="flex flex-1 flex-col">
-        <Link to={backLink} className="mb-2 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-primary">
-          <ArrowLeft className="h-4 w-4" /> Back
-        </Link>
         <div className="flex min-h-[62vh] flex-1 flex-col overflow-hidden rounded-2xl border bg-card">
-          <ChatWindow otherUserId={userId} otherUserName={otherProfile?.full_name || "Client"} />
+          <ChatWindow
+            otherUserId={userId}
+            otherUserName={otherProfile?.full_name || "Client"}
+            backLink={backLink}
+          />
         </div>
       </div>
     </AppLayout>
