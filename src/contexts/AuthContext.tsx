@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { User, Session } from "@supabase/supabase-js";
+import { isValidMainCategory, isValidSubcategoryForMain } from "@/data/serviceCategories";
 
 const toNumberOrNull = (value: unknown) => {
   const num = Number(value);
@@ -37,6 +38,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const role = md.role === "worker" ? "worker" : "customer";
     const bloodGroup = String(md.blood_group || "").trim() || null;
     const isBloodDonor = String(md.is_blood_donor || "false") === "true";
+    const rawMainCategory = String(md.main_category || "").trim();
+    const rawSubCategory = String(md.sub_category || "").trim();
+
+    const mainCategory = isValidMainCategory(rawMainCategory) ? rawMainCategory : null;
+    const subCategory =
+      mainCategory && isValidSubcategoryForMain(mainCategory, rawSubCategory)
+        ? rawSubCategory
+        : null;
 
     await supabase.from("profiles").upsert(
       {
@@ -64,7 +73,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       await supabase.from("workers").upsert(
         {
           user_id: nextUser.id,
-          profession: String(md.profession || "General Service").trim() || "General Service",
+          profession: subCategory || "General Service",
+          main_category: mainCategory,
+          sub_category: subCategory,
           experience: Math.max(0, parseInt(String(md.experience || "0"), 10) || 0),
           available: true,
           latitude: toNumberOrNull(md.latitude),

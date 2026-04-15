@@ -10,13 +10,15 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { getCurrentPosition, type Coords } from "@/lib/geolocation";
+import { MAIN_SERVICE_CATEGORIES, SUBCATEGORIES_BY_MAIN, type MainServiceCategory } from "@/data/serviceCategories";
 
 const UpgradeToWorker = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [profession, setProfession] = useState("");
+  const [mainCategory, setMainCategory] = useState<MainServiceCategory | "">("");
+  const [subCategory, setSubCategory] = useState("");
   const [experience, setExperience] = useState("");
   const [location, setLocation] = useState<Coords | null>(null);
   const [capturingLocation, setCapturingLocation] = useState(false);
@@ -36,8 +38,12 @@ const UpgradeToWorker = () => {
 
   const handleUpgrade = async () => {
     if (!user) return;
-    if (!profession.trim() || !experience.trim()) {
-      toast.error("Please fill in profession and experience.");
+    if (!experience.trim()) {
+      toast.error("Please fill in experience.");
+      return;
+    }
+    if (!mainCategory || !subCategory) {
+      toast.error("Please select both main category and subcategory.");
       return;
     }
     if (!location) {
@@ -50,7 +56,9 @@ const UpgradeToWorker = () => {
       // Insert worker record
       const { error: workerError } = await supabase.from("workers").insert({
         user_id: user.id,
-        profession: profession.trim(),
+          profession: subCategory,
+          main_category: mainCategory,
+          sub_category: subCategory,
         experience: parseInt(experience) || 0,
         city: null,
         service_areas: [],
@@ -121,8 +129,39 @@ const UpgradeToWorker = () => {
         </p>
         <div className="space-y-4">
           <div>
-            <Label>Profession *</Label>
-            <Input placeholder="e.g. Plumber, Electrician" className="mt-1.5" value={profession} onChange={e => setProfession(e.target.value)} />
+            <Label>Main Category *</Label>
+            <select
+              value={mainCategory}
+              onChange={(e) => {
+                const nextMainCategory = e.target.value as MainServiceCategory | "";
+                setMainCategory(nextMainCategory);
+                setSubCategory("");
+              }}
+              className="mt-1.5 w-full h-10 rounded-md border border-input bg-background px-3 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              <option value="">Select main category</option>
+              {MAIN_SERVICE_CATEGORIES.map((category) => (
+                <option key={category} value={category}>
+                  {category}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <Label>Subcategory *</Label>
+            <select
+              value={subCategory}
+              onChange={(e) => setSubCategory(e.target.value)}
+              disabled={!mainCategory}
+              className="mt-1.5 w-full h-10 rounded-md border border-input bg-background px-3 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <option value="">Select subcategory</option>
+              {(mainCategory ? SUBCATEGORIES_BY_MAIN[mainCategory] : []).map((category) => (
+                <option key={category} value={category}>
+                  {category}
+                </option>
+              ))}
+            </select>
           </div>
           <div>
             <Label>Years of Experience *</Label>
