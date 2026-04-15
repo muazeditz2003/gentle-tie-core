@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
-import { Search, Map, List, MapPin, Navigation, SlidersHorizontal } from "lucide-react";
+import { Search, Map, List, MapPin, Navigation, SlidersHorizontal, ChevronDown, ChevronUp } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -8,10 +8,10 @@ import MonetizedWorkerGrid from "@/components/MonetizedWorkerGrid";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { serviceCategories as mockCategories } from "@/data/mockData";
 import { calculateDistance } from "@/lib/geolocation";
 import AppLayout from "@/components/AppLayout";
 import { useRealtimeLocation } from "@/hooks/useRealtimeLocation";
+import { MAIN_SERVICE_CATEGORIES, SUBCATEGORIES_BY_MAIN } from "@/data/serviceCategories";
 
 type SortKey = "distance" | "rating" | "experience" | "price";
 const MAX_RADIUS_KM = 20;
@@ -24,7 +24,9 @@ const Discover = () => {
   const [sort, setSort] = useState<SortKey>("distance");
   const [priceBand, setPriceBand] = useState<"all" | "budget" | "mid" | "premium">("all");
   const [minRating, setMinRating] = useState(0);
-  const selectedCategory = searchParams.get("category") || "";
+  const selectedMainCategory = searchParams.get("main_category") || "";
+  const selectedSubCategory = searchParams.get("sub_category") || "";
+  const [expandedMainCategory, setExpandedMainCategory] = useState(selectedMainCategory);
   const [showMapView, setShowMapView] = useState(false);
   const { coords: userCoords, status: locationStatus, refresh: refreshLocation } = useRealtimeLocation();
 
@@ -80,16 +82,6 @@ const Discover = () => {
     return () => { supabase.removeChannel(channel); };
   }, [queryClient]);
 
-  const { data: dbCategories } = useQuery({
-    queryKey: ["service_categories"],
-    queryFn: async () => {
-      const { data, error } = await supabase.from("service_categories").select("*");
-      if (error) throw error;
-      return data;
-    },
-    enabled: true,
-  });
-
   const { data: reviewStats } = useQuery({
     queryKey: ["review_stats"],
     queryFn: async () => {
@@ -129,13 +121,17 @@ const Discover = () => {
         serviceAreas: w.service_areas || [],
         profilePhoto: w.profiles?.avatar_url || "",
         city: w.city || "",
+        mainCategory: w.main_category || "",
+        subCategory: w.sub_category || "",
       };
     });
   }, [dbWorkers, userCoords, reviewStats]);
 
-  const categories = dbCategories && dbCategories.length > 0
-    ? dbCategories.map(c => ({ id: c.name.toLowerCase().replace(/\s+/g, "-"), name: c.name, icon: c.icon, count: 0 }))
-    : mockCategories;
+  useEffect(() => {
+    if (selectedMainCategory) {
+      setExpandedMainCategory(selectedMainCategory);
+    }
+  }, [selectedMainCategory]);
 
   const filtered = useMemo(() => {
     let list = [...workersList];
@@ -146,16 +142,21 @@ const Discover = () => {
         return workerRecord?.user_id !== user.id;
       });
     }
-    if (selectedCategory) {
-      list = list.filter(w => w.profession.toLowerCase().replace(/\s+/g, "-") === selectedCategory);
+    if (selectedMainCategory) {
+      list = list.filter(w => w.mainCategory === selectedMainCategory);
+    }
+    if (selectedSubCategory) {
+      list = list.filter(w => w.subCategory === selectedSubCategory);
     }
     if (search) {
       const words = search.toLowerCase().trim().split(/\s+/);
       list = list.filter(w => {
         const name = w.name.toLowerCase();
         const prof = w.profession.toLowerCase();
+        const mainCategory = w.mainCategory.toLowerCase();
+        const subCategory = w.subCategory.toLowerCase();
         return words.every(
-          word => name.includes(word) || prof.includes(word)
+          word => name.includes(word) || prof.includes(word) || mainCategory.includes(word) || subCategory.includes(word)
         );
       });
     }
@@ -170,7 +171,7 @@ const Discover = () => {
       return b.experience - a.experience;
     });
     return list;
-  }, [workersList, selectedCategory, search, sort, user, dbWorkers]);
+  }, [workersList, selectedMainCategory, selectedSubCategory, search, sort, user, dbWorkers]);
 
   const sponsoredServiceIds = useMemo(() => {
     const ids = new Set<string>();
@@ -179,10 +180,28 @@ const Discover = () => {
     return ids;
   }, [monetization]);
 
-  const toggleCategory = (id: string) => {
-    if (selectedCategory === id) searchParams.delete("category");
-    else searchParams.set("category", id);
-    setSearchParams(searchParams);
+  const toggleMainCategory = (mainCategory: string) => {
+    const next = new URLSearchParams(searchParams);
+    if (selectedMainCategory === mainCategory) {
+      next.delete("main_category");
+      next.delete("sub_category");
+      setExpandedMainCategory("");
+    } else {
+      next.set("main_category", mainCategory);
+      next.delete("sub_category");
+      setExpandedMainCategory(mainCategory);
+    }
+    setSearchParams(next);
+  };
+
+  const toggleSubCategory = (subCategory: string) => {
+    const next = new URLSearchParams(searchParams);
+    if (selectedSubCategory === subCategory) {
+      next.delete("sub_category");
+    } else {
+      next.set("sub_category", subCategory);
+    }
+    setSearchParams(next);
   };
 
   const sortLabels: Record<SortKey, string> = {
@@ -211,9 +230,9 @@ const Discover = () => {
   });
 
   const discoverAds = useMemo(() => {
-    const placement = selectedCategory ? "category_feed" : "discover_feed";
+    const placement = selectedMainCategory || selectedSubCategory ? "category_feed" : "discover_feed";
     return (monetization?.ads || []).filter((a: any) => a.placement === placement || a.placement === "search_results");
-  }, [monetization, selectedCategory]);
+  }, [monetization, selectedMainCategory, selectedSubCategory]);
 
   return (
     <AppLayout title="Explore" subtitle="Discover trusted services nearby with smart filters and map/list browsing.">
@@ -255,17 +274,42 @@ const Discover = () => {
           </div>
         </div>
 
-        <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
-          {categories.map((cat) => (
-            <Badge
-              key={cat.id}
-              variant={selectedCategory === cat.id ? "default" : "outline"}
-              className="cursor-pointer shrink-0 rounded-full px-3 py-1.5"
-              onClick={() => toggleCategory(cat.id)}
-            >
-              {cat.icon} {cat.name}
-            </Badge>
-          ))}
+        <div className="space-y-3 rounded-2xl border bg-muted/30 p-3">
+          <p className="text-sm font-semibold text-foreground">Browse by category</p>
+          <div className="grid gap-2 sm:grid-cols-2">
+            {MAIN_SERVICE_CATEGORIES.map((mainCategory) => {
+              const isSelected = selectedMainCategory === mainCategory;
+              const isExpanded = expandedMainCategory === mainCategory;
+              return (
+                <button
+                  key={mainCategory}
+                  type="button"
+                  onClick={() => toggleMainCategory(mainCategory)}
+                  className={`flex items-center justify-between rounded-xl border px-3 py-2 text-left text-sm font-medium transition-all ${
+                    isSelected ? "border-primary bg-primary/10 text-primary" : "border-border bg-card text-foreground hover:bg-muted"
+                  }`}
+                >
+                  <span>{mainCategory}</span>
+                  {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                </button>
+              );
+            })}
+          </div>
+
+          {expandedMainCategory && (
+            <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
+              {SUBCATEGORIES_BY_MAIN[expandedMainCategory as keyof typeof SUBCATEGORIES_BY_MAIN].map((subCategory) => (
+                <Badge
+                  key={subCategory}
+                  variant={selectedSubCategory === subCategory ? "default" : "outline"}
+                  className="cursor-pointer shrink-0 rounded-full px-3 py-1.5"
+                  onClick={() => toggleSubCategory(subCategory)}
+                >
+                  {subCategory}
+                </Badge>
+              ))}
+            </div>
+          )}
         </div>
 
         <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
