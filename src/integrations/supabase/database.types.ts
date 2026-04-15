@@ -336,8 +336,10 @@ export type Database = {
           id: string
           latitude: number | null
           longitude: number | null
+          main_category: string | null
           profession: string
           service_areas: string[] | null
+          sub_category: string | null
           updated_at: string
           user_id: string
           verified: boolean
@@ -352,8 +354,10 @@ export type Database = {
           id?: string
           latitude?: number | null
           longitude?: number | null
+          main_category?: string | null
           profession: string
           service_areas?: string[] | null
+          sub_category?: string | null
           updated_at?: string
           user_id: string
           verified?: boolean
@@ -368,8 +372,10 @@ export type Database = {
           id?: string
           latitude?: number | null
           longitude?: number | null
+          main_category?: string | null
           profession?: string
           service_areas?: string[] | null
+          sub_category?: string | null
           updated_at?: string
           user_id?: string
           verified?: boolean
