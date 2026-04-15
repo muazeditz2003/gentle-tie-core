@@ -17,7 +17,6 @@ const UpgradeToWorker = () => {
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [profession, setProfession] = useState("");
   const [mainCategory, setMainCategory] = useState<MainServiceCategory | "">("");
   const [subCategory, setSubCategory] = useState("");
   const [experience, setExperience] = useState("");
@@ -39,8 +38,8 @@ const UpgradeToWorker = () => {
 
   const handleUpgrade = async () => {
     if (!user) return;
-    if (!profession.trim() || !experience.trim()) {
-      toast.error("Please fill in profession and experience.");
+    if (!experience.trim()) {
+      toast.error("Please fill in experience.");
       return;
     }
     if (!mainCategory || !subCategory) {
@@ -57,7 +56,7 @@ const UpgradeToWorker = () => {
       // Insert worker record
       const { error: workerError } = await supabase.from("workers").insert({
         user_id: user.id,
-        profession: profession.trim(),
+          profession: subCategory,
           main_category: mainCategory,
           sub_category: subCategory,
         experience: parseInt(experience) || 0,
@@ -129,10 +128,6 @@ const UpgradeToWorker = () => {
           Fill in your professional details to start appearing in search results. Your existing account info will be kept.
         </p>
         <div className="space-y-4">
-          <div>
-            <Label>Profession *</Label>
-            <Input placeholder="e.g. Plumber, Electrician" className="mt-1.5" value={profession} onChange={e => setProfession(e.target.value)} />
-          </div>
           <div>
             <Label>Main Category *</Label>
             <select

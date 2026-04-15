@@ -11,6 +11,7 @@ import { validatePassword } from "@/lib/passwordValidation";
 import { useI18n } from "@/i18n";
 import logoImg from "@/assets/logo.png";
 import { getCurrentPosition, type Coords } from "@/lib/geolocation";
+import { MAIN_SERVICE_CATEGORIES, SUBCATEGORIES_BY_MAIN, type MainServiceCategory } from "@/data/serviceCategories";
 
 const Register = () => {
   const navigate = useNavigate();
@@ -25,7 +26,8 @@ const Register = () => {
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [profession, setProfession] = useState("");
+  const [mainCategory, setMainCategory] = useState<MainServiceCategory | "">("");
+  const [subCategory, setSubCategory] = useState("");
   const [experience, setExperience] = useState("");
   const [bloodGroup, setBloodGroup] = useState("");
   const [willingToDonate, setWillingToDonate] = useState(false);
@@ -50,7 +52,6 @@ const Register = () => {
     const normalizedName = name.trim();
     const normalizedEmail = email.trim().toLowerCase();
     const normalizedPhone = phone.trim();
-    const normalizedProfession = profession.trim();
     const normalizedExperience = experience.trim();
 
     if (!normalizedName || !normalizedEmail || !password) {
@@ -62,8 +63,8 @@ const Register = () => {
       toast.error("Password doesn't meet requirements: " + pwValidation.errors[0]);
       return;
     }
-    if (role === "worker" && (!normalizedProfession || !normalizedExperience)) {
-      toast.error("Please fill in profession and experience.");
+    if (role === "worker" && (!mainCategory || !subCategory || !normalizedExperience)) {
+      toast.error("Please select category, subcategory, and experience.");
       return;
     }
     if (role === "worker" && !workerCoords) {
@@ -80,7 +81,9 @@ const Register = () => {
       is_blood_donor: willingToDonate ? "true" : "false",
     };
     if (role === "worker") {
-      metadata.profession = normalizedProfession;
+      metadata.main_category = mainCategory;
+      metadata.sub_category = subCategory;
+      metadata.profession = subCategory;
       metadata.experience = normalizedExperience;
       metadata.latitude = String(workerCoords?.latitude ?? "");
       metadata.longitude = String(workerCoords?.longitude ?? "");
@@ -201,8 +204,37 @@ const Register = () => {
             {role === "worker" && (
               <>
                 <div>
-                  <Label htmlFor="profession">{t("register.profession")} *</Label>
-                  <Input id="profession" placeholder="e.g. Plumber, Electrician" className="mt-1.5" value={profession} onChange={e => setProfession(e.target.value)} />
+                  <Label htmlFor="mainCategory">Main Category *</Label>
+                  <select
+                    id="mainCategory"
+                    value={mainCategory}
+                    onChange={(e) => {
+                      const nextMainCategory = e.target.value as MainServiceCategory | "";
+                      setMainCategory(nextMainCategory);
+                      setSubCategory("");
+                    }}
+                    className="mt-1.5 w-full h-10 rounded-md border border-input bg-background px-3 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  >
+                    <option value="">Select main category</option>
+                    {MAIN_SERVICE_CATEGORIES.map((category) => (
+                      <option key={category} value={category}>{category}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <Label htmlFor="subCategory">Subcategory *</Label>
+                  <select
+                    id="subCategory"
+                    value={subCategory}
+                    onChange={e => setSubCategory(e.target.value)}
+                    disabled={!mainCategory}
+                    className="mt-1.5 w-full h-10 rounded-md border border-input bg-background px-3 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    <option value="">Select subcategory</option>
+                    {(mainCategory ? SUBCATEGORIES_BY_MAIN[mainCategory] : []).map((category) => (
+                      <option key={category} value={category}>{category}</option>
+                    ))}
+                  </select>
                 </div>
                 <div>
                   <Label htmlFor="experience">{t("register.experience")} *</Label>
