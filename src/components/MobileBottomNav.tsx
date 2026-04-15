@@ -1,6 +1,6 @@
 import { useEffect } from "react";
-import { Home, Compass, Siren, MessageSquare, User, Plus, BriefcaseBusiness, Droplets, Megaphone } from "lucide-react";
-import { Link, useLocation } from "react-router-dom";
+import { Home, Compass, Siren, MessageSquare, User, Plus, BriefcaseBusiness, Droplets, Megaphone, LogOut, Settings } from "lucide-react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useUserRole } from "@/hooks/useUserRole";
 import { Button } from "@/components/ui/button";
@@ -8,7 +8,8 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 
 const MobileBottomNav = () => {
   const { pathname } = useLocation();
-  const { user } = useAuth();
+  const navigate = useNavigate();
+  const { user, signOut } = useAuth();
   const { role } = useUserRole();
 
   const hideNavRoutes = ["/login", "/register", "/forgot-password", "/reset-password", "/terms", "/privacy", "/disclaimer"];
@@ -26,6 +27,11 @@ const MobileBottomNav = () => {
       : role === "admin"
         ? "/admin"
         : "/dashboard";
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate("/login");
+  };
 
   const items = [
     { label: "Home", to: "/", icon: Home },
@@ -59,6 +65,23 @@ const MobileBottomNav = () => {
               <Megaphone className="h-4 w-4 text-secondary" />
               <span>Post Job</span>
             </Link>
+            {user && (
+              <>
+                <div className="my-1 h-px bg-border" />
+                <Link to={profilePath} className="tap-feedback flex items-center gap-2 rounded-xl px-3 py-2 text-sm hover:bg-muted">
+                  <Settings className="h-4 w-4 text-muted-foreground" />
+                  <span>Account</span>
+                </Link>
+                <button
+                  type="button"
+                  onClick={handleSignOut}
+                  className="tap-feedback flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm text-destructive hover:bg-destructive/10"
+                >
+                  <LogOut className="h-4 w-4" />
+                  <span>Sign out</span>
+                </button>
+              </>
+            )}
           </PopoverContent>
         </Popover>
       </div>
