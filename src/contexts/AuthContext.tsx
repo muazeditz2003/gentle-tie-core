@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { User, Session } from "@supabase/supabase-js";
 import { isValidMainCategory, isValidSubcategoryForMain } from "@/data/serviceCategories";
@@ -28,63 +28,81 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const inFlightEnsuresRef = useRef<Map<string, Promise<void>>>(new Map());
 
   const ensureUserRecords = async (nextUser: User | null) => {
     if (!nextUser) return;
 
-    const md = nextUser.user_metadata || {};
-    const fullName = String(md.full_name || "").trim();
-    const phone = String(md.phone || "").trim();
-    const role = md.role === "worker" ? "worker" : "customer";
-    const bloodGroup = String(md.blood_group || "").trim() || null;
-    const isBloodDonor = String(md.is_blood_donor || "false") === "true";
-    const rawMainCategory = String(md.main_category || "").trim();
-    const rawSubCategory = String(md.sub_category || "").trim();
-
-    const mainCategory = isValidMainCategory(rawMainCategory) ? rawMainCategory : null;
-    const subCategory =
-      mainCategory && isValidSubcategoryForMain(mainCategory, rawSubCategory)
-        ? rawSubCategory
-        : null;
-
-    await supabase.from("profiles").upsert(
-      {
-        user_id: nextUser.id,
-        full_name: fullName || nextUser.email?.split("@")[0] || "NearKonnect User",
-        phone: phone || null,
-        blood_group: bloodGroup,
-        is_blood_donor: isBloodDonor,
-      },
-      { onConflict: "user_id" }
-    );
-
-    const { data: existingRole } = await supabase
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", nextUser.id)
-      .eq("role", role)
-      .maybeSingle();
-
-    if (!existingRole) {
-      await supabase.from("user_roles").insert({ user_id: nextUser.id, role });
+    const existing = inFlightEnsuresRef.current.get(nextUser.id);
+    if (existing) {
+      await existing;
+      return;
     }
 
-    if (role === "worker") {
-      await supabase.from("workers").upsert(
+    const task = (async () => {
+      const md = nextUser.user_metadata || {};
+      const fullName = String(md.full_name || "").trim();
+      const phone = String(md.phone || "").trim();
+      const role = md.role === "worker" ? "worker" : "customer";
+      const bloodGroup = String(md.blood_group || "").trim() || null;
+      const isBloodDonor = String(md.is_blood_donor || "false") === "true";
+      const rawMainCategory = String(md.main_category || "").trim();
+      const rawSubCategory = String(md.sub_category || "").trim();
+
+      const mainCategory = isValidMainCategory(rawMainCategory) ? rawMainCategory : null;
+      const subCategory =
+        mainCategory && isValidSubcategoryForMain(mainCategory, rawSubCategory)
+          ? rawSubCategory
+          : null;
+
+      await supabase.from("profiles").upsert(
         {
           user_id: nextUser.id,
-          profession: subCategory || "General Service",
-          main_category: mainCategory,
-          sub_category: subCategory,
-          experience: Math.max(0, parseInt(String(md.experience || "0"), 10) || 0),
-          available: true,
-          latitude: toNumberOrNull(md.latitude),
-          longitude: toNumberOrNull(md.longitude),
-          service_areas: [],
-          city: null,
+          full_name: fullName || nextUser.email?.split("@")[0] || "NearKonnect User",
+          phone: phone || null,
+          blood_group: bloodGroup,
+          is_blood_donor: isBloodDonor,
         },
         { onConflict: "user_id" }
       );
+
+      const { data: existingRole } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", nextUser.id)
+        .eq("role", role)
+        .maybeSingle();
+
+      if (!existingRole) {
+        await supabase.from("user_roles").insert({ user_id: nextUser.id, role });
+      }
+
+      if (role === "worker") {
+        await supabase.from("workers").upsert(
+          {
+            user_id: nextUser.id,
+            profession: subCategory || "General Service",
+            main_category: mainCategory,
+            sub_category: subCategory,
+            experience: Math.max(0, parseInt(String(md.experience || "0"), 10) || 0),
+            available: true,
+            latitude: toNumberOrNull(md.latitude),
+            longitude: toNumberOrNull(md.longitude),
+            service_areas: [],
+            city: null,
+          },
+          { onConflict: "user_id" }
+        );
+      }
+    })().catch((error) => {
+      console.error("Failed to ensure user records", error);
+    });
+
+    inFlightEnsuresRef.current.set(nextUser.id, task);
+    try {
+      await task;
+    } finally {
+      inFlightEnsuresRef.current.delete(nextUser.id);
     }
   };
 
