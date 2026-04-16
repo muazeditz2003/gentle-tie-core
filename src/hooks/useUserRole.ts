@@ -19,6 +19,9 @@ export function useUserRole() {
       return "customer";
     },
     enabled: !!user,
+    staleTime: 60_000,
+    gcTime: 10 * 60_000,
+    retry: 1,
   });
 
   return { role: role as "customer" | "worker" | "admin" | undefined, isLoading };
