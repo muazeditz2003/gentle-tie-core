@@ -26,7 +26,16 @@ import TermsAndConditions from "./pages/TermsAndConditions.tsx";
 import SupportChatbot from "./components/SupportChatbot";
 import MobileBottomNav from "@/components/MobileBottomNav";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 30_000,
+      gcTime: 5 * 60_000,
+      refetchOnWindowFocus: false,
+      retry: 1,
+    },
+  },
+});
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
