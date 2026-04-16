@@ -132,7 +132,7 @@ const ChatWindow = ({ otherUserId, otherUserName, backLink }: Props) => {
 
     supabase
       .from("messages")
-      .update({ status: "seen", seen_at: new Date().toISOString() })
+      .update({ status: "seen" as any, seen_at: new Date().toISOString() })
       .in("id", unseenIds)
       .then(() => {
         queryClient.invalidateQueries({ queryKey: ["conversations", user.id] });
