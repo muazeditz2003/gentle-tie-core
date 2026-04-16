@@ -44,7 +44,7 @@ const ChatWindow = ({ otherUserId, otherUserName, backLink }: Props) => {
   const { data: initialMessages = [], isLoading, error, refetch } = useQuery({
     queryKey: ["messages", user?.id, otherUserId],
     queryFn: async () => {
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from("messages")
         .select("*")
         .or(conversationFilter)
@@ -54,7 +54,9 @@ const ChatWindow = ({ otherUserId, otherUserName, backLink }: Props) => {
       return (data || []).reverse() as ChatMessage[];
     },
     enabled: !!user && !!otherUserId,
-    refetchInterval: 5000,
+    staleTime: 15_000,
+    gcTime: 5 * 60_000,
+    retry: 1,
   });
 
   useEffect(() => {
@@ -128,7 +130,7 @@ const ChatWindow = ({ otherUserId, otherUserName, backLink }: Props) => {
 
     if (unseenIds.length === 0) return;
 
-    (supabase as any)
+    supabase
       .from("messages")
       .update({ status: "seen", seen_at: new Date().toISOString() })
       .in("id", unseenIds)
@@ -158,7 +160,7 @@ const ChatWindow = ({ otherUserId, otherUserName, backLink }: Props) => {
       ]);
     }
 
-    const { data, error } = await (supabase as any)
+    const { data, error } = await supabase
       .from("messages")
       .insert({
         sender_id: user.id,
@@ -212,7 +214,7 @@ const ChatWindow = ({ otherUserId, otherUserName, backLink }: Props) => {
     const oldest = messages[0]?.created_at;
     const prevHeight = scrollRef.current?.scrollHeight || 0;
 
-    const { data, error } = await (supabase as any)
+    const { data, error } = await supabase
       .from("messages")
       .select("*")
       .or(conversationFilter)
