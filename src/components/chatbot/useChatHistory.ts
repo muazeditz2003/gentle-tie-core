@@ -127,13 +127,17 @@ export function useChatHistory() {
 
   const loadConversation = useCallback(async (convId: string) => {
     setActiveConversationId(convId);
-    const { data: msgs } = await supabase
-      .from("chatbot_messages")
-      .select("*")
-      .eq("conversation_id", convId)
-      .order("created_at", { ascending: true });
-    if (msgs) {
-      setMessages(msgs.map((m: any) => ({ role: m.role as "user" | "assistant", content: m.content })));
+    try {
+      const { data: msgs } = await supabase
+        .from("chatbot_messages")
+        .select("*")
+        .eq("conversation_id", convId)
+        .order("created_at", { ascending: true });
+      if (msgs) {
+        setMessages(msgs.map((m: any) => ({ role: m.role as "user" | "assistant", content: m.content })));
+      }
+    } catch (error) {
+      console.error("Failed loading chatbot conversation", error);
     }
   }, []);
 
@@ -144,7 +148,11 @@ export function useChatHistory() {
 
   const deleteConversation = useCallback(async (convId: string) => {
     if (!user) return;
-    await supabase.from("chatbot_conversations").delete().eq("id", convId);
+    const { error } = await supabase.from("chatbot_conversations").delete().eq("id", convId);
+    if (error) {
+      console.error("Failed deleting chatbot conversation", error);
+      return;
+    }
     setConversations(prev => prev.filter(c => c.id !== convId));
     if (activeConversationId === convId) {
       setActiveConversationId(null);

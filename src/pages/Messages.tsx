@@ -22,7 +22,9 @@ const Messages = () => {
     queryKey: ["conversations", user?.id],
     queryFn: async () => fetchConversationSummaries(user!.id),
     enabled: !!user,
-    refetchInterval: 5000,
+    staleTime: 15_000,
+    gcTime: 5 * 60_000,
+    retry: 1,
   });
 
   useEffect(() => {
