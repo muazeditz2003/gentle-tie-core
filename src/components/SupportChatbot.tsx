@@ -80,7 +80,11 @@ const SupportChatbot = () => {
 
     // Save user message
     let convId = activeConversationId;
-    convId = await saveMessage(userMsg, convId);
+    try {
+      convId = await saveMessage(userMsg, convId);
+    } catch (error) {
+      console.error("Failed to save user chat message", error);
+    }
 
     let assistantSoFar = "";
     const upsert = (chunk: string) => {
@@ -96,14 +100,18 @@ const SupportChatbot = () => {
 
     try {
       await streamChat({
-        messages: updatedMessages.filter((m) => m.role !== "assistant" || updatedMessages.indexOf(m) !== 0),
+        messages: updatedMessages.filter((m, index) => !(index === 0 && m.role === "assistant")),
         userCoords: coords,
         onDelta: upsert,
         onDone: async () => {
           setLoading(false);
           // Save assistant response
           if (assistantSoFar) {
-            await saveMessage({ role: "assistant", content: assistantSoFar }, convId);
+            try {
+              await saveMessage({ role: "assistant", content: assistantSoFar }, convId);
+            } catch (error) {
+              console.error("Failed to save assistant chat message", error);
+            }
           }
         },
         onError: (msg) => {

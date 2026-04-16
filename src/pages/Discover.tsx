@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
-import { useSearchParams, useNavigate } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 import { Search, Map, List, MapPin, Navigation, SlidersHorizontal, ChevronDown, ChevronUp } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -63,6 +63,9 @@ const Discover = () => {
       return data;
     },
     enabled: true,
+    staleTime: 30_000,
+    gcTime: 5 * 60_000,
+    retry: 1,
   });
 
   useEffect(() => {
@@ -86,7 +89,10 @@ const Discover = () => {
     queryKey: ["review_stats"],
     queryFn: async () => {
       const { data, error } = await supabase.from("reviews").select("worker_id, rating");
-      if (error) throw error;
+      if (error) {
+        console.warn("Review stats unavailable", error.message);
+        return {} as Record<string, { total: number; count: number }>;
+      }
       const stats: Record<string, { total: number; count: number }> = {};
       data.forEach((r: any) => {
         if (!stats[r.worker_id]) stats[r.worker_id] = { total: 0, count: 0 };
@@ -96,6 +102,9 @@ const Discover = () => {
       return stats;
     },
     enabled: true,
+    staleTime: 30_000,
+    gcTime: 5 * 60_000,
+    retry: 1,
   });
 
   const workersList = useMemo(() => {
@@ -108,6 +117,7 @@ const Discover = () => {
       }
       return {
         id: w.id,
+        userId: w.user_id,
         name: w.profiles?.full_name || "Unknown",
         profession: w.profession,
         rating,
@@ -127,6 +137,8 @@ const Discover = () => {
     });
   }, [dbWorkers, userCoords, reviewStats]);
 
+  const ownWorkerUserId = user?.id || null;
+
   useEffect(() => {
     if (selectedMainCategory) {
       setExpandedMainCategory(selectedMainCategory);
@@ -136,11 +148,8 @@ const Discover = () => {
   const filtered = useMemo(() => {
     let list = [...workersList];
     // Exclude the current user's own worker profile from the list
-    if (user) {
-      list = list.filter(w => {
-        const workerRecord = dbWorkers.find((dw: any) => dw.id === w.id);
-        return workerRecord?.user_id !== user.id;
-      });
+    if (ownWorkerUserId) {
+      list = list.filter((w) => w.userId !== ownWorkerUserId);
     }
     if (selectedMainCategory) {
       list = list.filter(w => w.mainCategory === selectedMainCategory);
@@ -168,10 +177,11 @@ const Discover = () => {
     list.sort((a, b) => {
       if (sort === "distance") return a.distance - b.distance;
       if (sort === "rating") return b.rating - a.rating;
+      if (sort === "price") return a.experience - b.experience;
       return b.experience - a.experience;
     });
     return list;
-  }, [workersList, selectedMainCategory, selectedSubCategory, search, sort, user, dbWorkers]);
+  }, [workersList, selectedMainCategory, selectedSubCategory, search, sort, ownWorkerUserId, userCoords]);
 
   const sponsoredServiceIds = useMemo(() => {
     const ids = new Set<string>();

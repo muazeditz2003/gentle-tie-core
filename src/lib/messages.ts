@@ -10,7 +10,7 @@ export type ConversationSummary = {
 };
 
 export async function fetchConversationSummaries(userId: string): Promise<ConversationSummary[]> {
-  const { data: msgs, error } = await (supabase as any)
+  const { data: msgs, error } = await supabase
     .from("messages")
     .select("sender_id, receiver_id, message_text, created_at, status")
     .or(`sender_id.eq.${userId},receiver_id.eq.${userId}`)
@@ -33,13 +33,19 @@ export async function fetchConversationSummaries(userId: string): Promise<Conver
   const ids = Array.from(latestByUser.keys());
   if (!ids.length) return [];
 
-  const { data: profiles } = await supabase
+  const { data: profiles, error: profileError } = await supabase
     .from("profiles")
     .select("user_id, full_name, avatar_url")
     .in("user_id", ids);
 
+  if (profileError) throw profileError;
+
+  const profileByUserId = new Map(
+    (profiles || []).map((profile) => [profile.user_id, profile]),
+  );
+
   return ids.map((id) => {
-    const p = profiles?.find((pr: any) => pr.user_id === id);
+    const p = profileByUserId.get(id);
     const info = latestByUser.get(id)!;
 
     return {
