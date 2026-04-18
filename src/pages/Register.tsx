@@ -12,6 +12,7 @@ import { useI18n } from "@/i18n";
 import logoImg from "@/assets/logo.png";
 import { getCurrentPosition, type Coords } from "@/lib/geolocation";
 import { MAIN_SERVICE_CATEGORIES, SUBCATEGORIES_BY_MAIN, type MainServiceCategory } from "@/data/serviceCategories";
+import GoogleMapEmbed from "@/components/marketplace/GoogleMapEmbed";
 
 const Register = () => {
   const navigate = useNavigate();
@@ -248,7 +249,17 @@ const Register = () => {
                     {workerCoords ? "Service location saved" : capturingLocation ? "Detecting location..." : "Use my current location"}
                   </Button>
                   {workerCoords && (
-                    <p className="mt-2 text-xs text-muted-foreground">{workerCoords.latitude.toFixed(5)}, {workerCoords.longitude.toFixed(5)}</p>
+                    <>
+                      <p className="mt-2 text-xs text-muted-foreground">{workerCoords.latitude.toFixed(5)}, {workerCoords.longitude.toFixed(5)}</p>
+                      <div className="mt-3">
+                        <GoogleMapEmbed
+                          latitude={workerCoords.latitude}
+                          longitude={workerCoords.longitude}
+                          title="Selected workplace location"
+                          className="h-48"
+                        />
+                      </div>
+                    </>
                   )}
                 </div>
               </>

@@ -14,6 +14,7 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import AppLayout from "@/components/AppLayout";
 import AuthRequiredDialog from "@/components/AuthRequiredDialog";
+import GoogleMapEmbed from "@/components/marketplace/GoogleMapEmbed";
 
 const WorkerProfile = () => {
   const { id } = useParams();
@@ -214,6 +215,16 @@ const WorkerProfile = () => {
             <div className="flex gap-2 flex-wrap">
               {worker.serviceAreas.map((area: string) => <Badge key={area} variant="outline">{area}</Badge>)}
             </div>
+          </div>
+
+          <div className="mt-6">
+            <h2 className="font-semibold text-card-foreground mb-2">Workplace Location</h2>
+            <GoogleMapEmbed
+              latitude={dbWorker.latitude}
+              longitude={dbWorker.longitude}
+              title={`${worker.name} workplace location`}
+              className="h-56"
+            />
           </div>
 
           {/* Write Review */}
