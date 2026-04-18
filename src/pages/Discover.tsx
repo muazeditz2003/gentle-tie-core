@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Search, Map, List, MapPin, Navigation, SlidersHorizontal, ChevronDown, ChevronUp } from "lucide-react";
+import { Search, Map, List, MapPin, Navigation, ChevronDown, ChevronUp } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -12,6 +12,7 @@ import { calculateDistance } from "@/lib/geolocation";
 import AppLayout from "@/components/AppLayout";
 import { useRealtimeLocation } from "@/hooks/useRealtimeLocation";
 import { MAIN_SERVICE_CATEGORIES, SUBCATEGORIES_BY_MAIN } from "@/data/serviceCategories";
+import GoogleMapEmbed from "@/components/marketplace/GoogleMapEmbed";
 
 type SortKey = "distance" | "rating" | "experience" | "price";
 const MAX_RADIUS_KM = 20;
@@ -28,6 +29,7 @@ const Discover = () => {
   const selectedSubCategory = searchParams.get("sub_category") || "";
   const [expandedMainCategory, setExpandedMainCategory] = useState(selectedMainCategory);
   const [showMapView, setShowMapView] = useState(false);
+  const [radiusKm, setRadiusKm] = useState<1 | 2 | 3>(3);
   const { coords: userCoords, status: locationStatus, refresh: refreshLocation } = useRealtimeLocation();
 
   const { data: monetization } = useQuery({
@@ -171,7 +173,7 @@ const Discover = () => {
     }
     if (userCoords) {
       list = list
-        .filter((w) => w.distance > 0 && w.distance <= MAX_RADIUS_KM)
+        .filter((w) => w.distance > 0 && w.distance <= radiusKm)
         .sort((a, b) => a.distance - b.distance);
     }
     list.sort((a, b) => {
@@ -181,7 +183,7 @@ const Discover = () => {
       return b.experience - a.experience;
     });
     return list;
-  }, [workersList, selectedMainCategory, selectedSubCategory, search, sort, ownWorkerUserId, userCoords]);
+  }, [workersList, selectedMainCategory, selectedSubCategory, search, sort, ownWorkerUserId, userCoords, radiusKm]);
 
   const sponsoredServiceIds = useMemo(() => {
     const ids = new Set<string>();
@@ -273,14 +275,22 @@ const Discover = () => {
           </div>
 
           <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
+            {([1, 2, 3] as const).map((radius) => (
+              <Button
+                key={`radius-${radius}`}
+                variant={radiusKm === radius ? "default" : "outline"}
+                size="sm"
+                onClick={() => setRadiusKm(radius)}
+                className="shrink-0 rounded-full"
+              >
+                {radius}km
+              </Button>
+            ))}
             {(["distance", "rating", "experience", "price"] as SortKey[]).map((s) => (
               <Button key={s} variant={sort === s ? "default" : "outline"} size="sm" onClick={() => setSort(s)} className="shrink-0 rounded-full">
                 {sortLabels[s]}
               </Button>
             ))}
-            <Button variant="outline" size="sm" className="shrink-0 gap-1 rounded-full">
-              <SlidersHorizontal className="h-3.5 w-3.5" /> Filters
-            </Button>
           </div>
         </div>
 
@@ -349,17 +359,23 @@ const Discover = () => {
 
         <p className="text-sm text-muted-foreground">{sorted.length} services found</p>
         {showMapView ? (
-          <div className="rounded-2xl border bg-card p-12 text-center">
-            <Map className="mx-auto mb-2 h-9 w-9 text-primary" />
-            <p className="font-semibold text-card-foreground">Map view</p>
-            <p className="text-sm text-muted-foreground">Nearby workers (simulated pins within {MAX_RADIUS_KM} km)</p>
-            <div className="mx-auto mt-4 max-w-md space-y-2 text-left">
-              {sorted.slice(0, 6).map((worker) => (
-                <div key={`map-pin-${worker.id}`} className="flex items-center justify-between rounded-xl border bg-muted/40 px-3 py-2 text-xs">
-                  <span className="font-medium text-foreground">📍 {worker.name}</span>
-                  <span className="text-muted-foreground">{worker.distance.toFixed(1)} km away</span>
-                </div>
-              ))}
+          <div className="grid gap-3 lg:grid-cols-[1.2fr,1fr]">
+            <GoogleMapEmbed
+              latitude={userCoords?.latitude}
+              longitude={userCoords?.longitude}
+              title="Nearby services map"
+              className="h-[360px]"
+            />
+            <div className="rounded-2xl border bg-card p-3">
+              <p className="mb-2 text-sm font-semibold text-foreground">Nearby services ({radiusKm}km)</p>
+              <div className="max-h-[312px] space-y-2 overflow-y-auto pr-1">
+                {sorted.slice(0, 12).map((worker) => (
+                  <div key={`map-list-${worker.id}`} className="rounded-xl border bg-muted/30 px-3 py-2">
+                    <p className="text-sm font-medium text-foreground">{worker.name}</p>
+                    <p className="text-xs text-muted-foreground">{worker.profession} • {worker.distance.toFixed(1)} km</p>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         ) : (
