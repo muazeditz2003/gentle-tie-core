@@ -249,7 +249,7 @@ const Discover = () => {
   return (
     <AppLayout title="Explore" subtitle="Discover trusted services nearby with smart filters and map/list browsing.">
       <div className="space-y-5">
-        <div className="rounded-2xl border bg-muted/40 p-3">
+        <div className="surface-soft rounded-2xl p-3 shadow-premium">
           <div className="mb-3 flex items-center gap-2 text-xs text-muted-foreground">
             <MapPin className="h-3.5 w-3.5" />
             {locationStatus === "denied" ? (
@@ -267,9 +267,9 @@ const Discover = () => {
           <div className="mb-3 flex gap-2">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input placeholder="Find services near you..." value={search} onChange={(e) => setSearch(e.target.value)} className="h-11 rounded-xl bg-card pl-10" />
+               <Input placeholder="Find services near you..." value={search} onChange={(e) => setSearch(e.target.value)} className="h-11 rounded-xl border-border/60 bg-card pl-10" />
             </div>
-            <Button variant="outline" size="icon" className="h-11 w-11 rounded-xl" onClick={() => setShowMapView((v) => !v)}>
+             <Button variant="outline" size="icon" className="h-11 w-11 rounded-xl border-border/60" onClick={() => setShowMapView((v) => !v)}>
               {showMapView ? <List className="h-4 w-4" /> : <Map className="h-4 w-4" />}
             </Button>
           </div>
@@ -294,7 +294,7 @@ const Discover = () => {
           </div>
         </div>
 
-        <div className="space-y-3 rounded-2xl border bg-muted/30 p-3">
+        <div className="space-y-3 rounded-2xl border border-border/60 bg-muted/40 p-3">
           <p className="text-sm font-semibold text-foreground">Browse by category</p>
           <div className="grid gap-2 sm:grid-cols-2">
             {MAIN_SERVICE_CATEGORIES.map((mainCategory) => {
@@ -306,7 +306,7 @@ const Discover = () => {
                   type="button"
                   onClick={() => toggleMainCategory(mainCategory)}
                   className={`flex items-center justify-between rounded-xl border px-3 py-2 text-left text-sm font-medium transition-all ${
-                    isSelected ? "border-primary bg-primary/10 text-primary" : "border-border bg-card text-foreground hover:bg-muted"
+                     isSelected ? "border-primary bg-gradient-brand text-primary-foreground shadow-sm" : "border-border/70 bg-card text-foreground hover:bg-muted"
                   }`}
                 >
                   <span>{mainCategory}</span>
@@ -359,18 +359,18 @@ const Discover = () => {
 
         <p className="text-sm text-muted-foreground">{sorted.length} services found</p>
         {showMapView ? (
-          <div className="grid gap-3 lg:grid-cols-[1.2fr,1fr]">
+           <div className="grid gap-3 lg:grid-cols-[1.2fr,1fr]">
             <GoogleMapEmbed
               latitude={userCoords?.latitude}
               longitude={userCoords?.longitude}
               title="Nearby services map"
               className="h-[360px]"
             />
-            <div className="rounded-2xl border bg-card p-3">
+             <div className="rounded-2xl border border-border/60 bg-card p-3 shadow-premium">
               <p className="mb-2 text-sm font-semibold text-foreground">Nearby services ({radiusKm}km)</p>
               <div className="max-h-[312px] space-y-2 overflow-y-auto pr-1">
                 {sorted.slice(0, 12).map((worker) => (
-                  <div key={`map-list-${worker.id}`} className="rounded-xl border bg-muted/30 px-3 py-2">
+                   <div key={`map-list-${worker.id}`} className="rounded-xl border border-border/60 bg-muted/30 px-3 py-2">
                     <p className="text-sm font-medium text-foreground">{worker.name}</p>
                     <p className="text-xs text-muted-foreground">{worker.profession} • {worker.distance.toFixed(1)} km</p>
                   </div>
@@ -387,7 +387,7 @@ const Discover = () => {
         )}
 
         {sorted.length === 0 && (
-          <div className="rounded-2xl border bg-muted/30 p-10 text-center">
+          <div className="rounded-2xl border border-border/60 bg-muted/30 p-10 text-center">
             <p className="font-semibold text-foreground">No services match this filter set</p>
             <p className="text-sm text-muted-foreground">Try widening distance, rating, or category filters.</p>
           </div>

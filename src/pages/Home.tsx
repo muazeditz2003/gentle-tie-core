@@ -222,15 +222,15 @@ const Home = () => {
         </Button>
       }
     >
-      <section className="space-y-6">
-        <motion.div initial="hidden" animate="visible" variants={fadeUp} custom={0} className="rounded-3xl border bg-muted/40 p-4">
+      <section className="space-y-5">
+        <motion.div initial="hidden" animate="visible" variants={fadeUp} custom={0} className="surface-soft rounded-[1.75rem] p-4 shadow-premium">
           <div className="relative mb-3">
             <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
             <Input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Find services near you..."
-              className="h-12 rounded-2xl bg-card pl-10 text-base"
+              className="h-12 rounded-xl border-border/60 bg-card pl-10 text-base"
               onKeyDown={(e) => {
                 if (e.key === "Enter") navigate(`/discover?search=${encodeURIComponent(search)}`);
               }}
@@ -244,14 +244,14 @@ const Home = () => {
                   setSearch(suggestion);
                   navigate(`/discover?search=${encodeURIComponent(suggestion)}`);
                 }}
-                className="tap-feedback shrink-0 rounded-full bg-card px-3 py-1.5 text-xs font-medium text-foreground"
+                 className="tap-feedback shrink-0 rounded-full bg-muted px-3 py-1.5 text-xs font-medium text-foreground"
               >
                 {suggestion}
               </button>
             ))}
           </div>
 
-          <div className="mt-3 flex flex-wrap items-center gap-2 rounded-xl border bg-card p-2 text-xs text-muted-foreground">
+          <div className="mt-3 flex flex-wrap items-center gap-2 rounded-2xl border border-border/60 bg-card/90 p-2.5 text-xs text-muted-foreground">
             <MapPin className="h-3.5 w-3.5" />
             {locationStatus === "denied" ? (
               <span>Please enable location to continue</span>
@@ -265,7 +265,7 @@ const Home = () => {
             </Button>
           </div>
 
-          <div className="mt-3 rounded-2xl border border-primary/25 bg-primary/5 p-4">
+          <div className="mt-3 rounded-2xl border border-primary/30 bg-gradient-to-r from-primary/10 to-secondary/10 p-4">
             {bannerAd.image_url ? (
               <div className="relative overflow-hidden rounded-xl">
                 <img
@@ -294,7 +294,7 @@ const Home = () => {
             )}
           </div>
 
-          <div className="mt-3 rounded-2xl border bg-card p-3">
+          <div className="mt-3 rounded-2xl border border-border/60 bg-card p-3 shadow-premium">
             <div className="mb-3 flex items-center justify-between">
               <p className="text-sm font-semibold text-foreground">Nearby services around your location</p>
               <Button
@@ -328,17 +328,17 @@ const Home = () => {
         </motion.div>
 
         <motion.div initial="hidden" animate="visible" variants={fadeUp} custom={1} className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-          <button onClick={() => navigate("/discover")} className="tap-feedback rounded-2xl border bg-card p-4 text-left">
+          <button onClick={() => navigate("/discover")} className="tap-feedback rounded-2xl border border-border/60 bg-card p-4 text-left shadow-premium">
             <UserSearch className="mb-2 h-5 w-5 text-primary" />
             <p className="font-semibold text-foreground">Find a Service</p>
             <p className="text-xs text-muted-foreground">Trusted people near your location</p>
           </button>
-          <button onClick={() => navigate("/blood-donors")} className="tap-feedback rounded-2xl border bg-card p-4 text-left">
+          <button onClick={() => navigate("/blood-donors")} className="tap-feedback rounded-2xl border border-border/60 bg-card p-4 text-left shadow-premium">
             <HeartPulse className="mb-2 h-5 w-5 text-destructive" />
             <p className="font-semibold text-foreground">Request Urgent Help</p>
             <p className="text-xs text-muted-foreground">Blood and emergency support fast</p>
           </button>
-          <button onClick={() => navigate("/discover")} className="tap-feedback rounded-2xl border bg-card p-4 text-left">
+          <button onClick={() => navigate("/discover")} className="tap-feedback rounded-2xl border border-border/60 bg-card p-4 text-left shadow-premium">
             <Compass className="mb-2 h-5 w-5 text-secondary" />
             <p className="font-semibold text-foreground">Browse Categories</p>
             <p className="text-xs text-muted-foreground">Explore services by type</p>
@@ -405,7 +405,7 @@ const Home = () => {
               <button
                 key={category.id}
                 onClick={() => navigate(category.id === "blood-donors" ? "/blood-donors" : `/discover?category=${category.id}`)}
-                className="tap-feedback rounded-2xl border bg-card p-3 text-left"
+                className="tap-feedback rounded-2xl border border-border/60 bg-card p-3 text-left shadow-premium"
               >
                 <div className="mb-1.5 text-xl">{category.icon}</div>
                 <p className="text-sm font-semibold text-foreground">{category.name}</p>
@@ -420,7 +420,7 @@ const Home = () => {
               <button
                 key={category.id}
                 onClick={() => navigate(`/discover?category=${category.id}`)}
-                className="tap-feedback rounded-2xl border bg-card p-3 text-left"
+                className="tap-feedback rounded-2xl border border-border/60 bg-card p-3 text-left shadow-premium"
               >
                 <div className="mb-1.5 text-xl">{category.icon}</div>
                 <p className="text-sm font-semibold text-foreground">{category.name}</p>

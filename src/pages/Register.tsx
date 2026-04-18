@@ -119,15 +119,15 @@ const Register = () => {
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      <div className="absolute -top-40 -right-40 w-[500px] h-[500px] rounded-full bg-primary/5 blur-3xl" />
-      <div className="absolute -bottom-40 -left-40 w-[400px] h-[400px] rounded-full bg-[hsl(var(--gradient-end))]/5 blur-3xl" />
+      <div className="absolute -top-40 -right-40 h-[500px] w-[500px] rounded-full bg-primary/10 blur-3xl" />
+      <div className="absolute -bottom-40 -left-40 h-[400px] w-[400px] rounded-full bg-secondary/10 blur-3xl" />
 
       <div className="w-full max-w-md relative">
         <Link to="/" className="flex items-center justify-center gap-2 mb-8">
           <img src={logoImg} alt="Near Konnect" className="h-12 object-contain" />
         </Link>
 
-        <div className="glass rounded-2xl p-6 md:p-8 shadow-premium">
+        <div className="rounded-2xl border border-border/60 bg-card/95 p-6 shadow-premium backdrop-blur-xl md:p-8">
           <h1 className="text-2xl font-bold text-card-foreground mb-1">{t("register.title")}</h1>
           <p className="text-sm text-muted-foreground mb-6">{t("register.subtitle")}</p>
 
@@ -136,9 +136,9 @@ const Register = () => {
               <button
                 key={r}
                 onClick={() => setRole(r)}
-                className={`flex-1 py-2.5 px-3 rounded-lg text-sm font-medium transition-all ${
+                  className={`flex-1 rounded-lg px-3 py-2.5 text-sm font-medium transition-all ${
                   role === r
-                    ? "bg-gradient-brand text-primary-foreground shadow-sm"
+                      ? "bg-gradient-brand text-primary-foreground shadow-sm"
                     : "text-muted-foreground hover:text-card-foreground"
                 }`}
               >
@@ -214,7 +214,7 @@ const Register = () => {
                       setMainCategory(nextMainCategory);
                       setSubCategory("");
                     }}
-                    className="mt-1.5 w-full h-10 rounded-md border border-input bg-background px-3 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    className="mt-1.5 h-10 w-full rounded-lg border border-input bg-background px-3 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   >
                     <option value="">Select main category</option>
                     {MAIN_SERVICE_CATEGORIES.map((category) => (
@@ -229,7 +229,7 @@ const Register = () => {
                     value={subCategory}
                     onChange={e => setSubCategory(e.target.value)}
                     disabled={!mainCategory}
-                    className="mt-1.5 w-full h-10 rounded-md border border-input bg-background px-3 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                    className="mt-1.5 h-10 w-full rounded-lg border border-input bg-background px-3 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     <option value="">Select subcategory</option>
                     {(mainCategory ? SUBCATEGORIES_BY_MAIN[mainCategory] : []).map((category) => (
@@ -241,7 +241,7 @@ const Register = () => {
                   <Label htmlFor="experience">{t("register.experience")} *</Label>
                   <Input id="experience" type="number" placeholder="e.g. 5" className="mt-1.5" value={experience} onChange={e => setExperience(e.target.value)} />
                 </div>
-                <div className="rounded-xl border bg-muted/40 p-3">
+                <div className="rounded-xl border border-border/60 bg-muted/40 p-3">
                   <p className="text-sm font-medium text-foreground">Use your current location as your service location?</p>
                   <p className="mt-1 text-xs text-muted-foreground">This fixed location is used for nearby matching and cannot be changed frequently.</p>
                   <Button type="button" variant="outline" className="mt-3 w-full gap-2" onClick={handleCaptureWorkerLocation} disabled={capturingLocation || !!workerCoords}>
