@@ -1,5 +1,5 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Bell, ChevronDown, Compass, HeartPulse, Home, LogOut, MessageSquare, Search, UserRound } from "lucide-react";
+import { ChevronDown, Compass, HeartPulse, Home, LogOut, MessageSquare, Search, UserRound } from "lucide-react";
 import type { ReactNode } from "react";
 import NotificationBell from "@/components/NotificationBell";
 import { Button } from "@/components/ui/button";
@@ -96,10 +96,6 @@ const AppLayout = ({ title, subtitle, action, children }: AppLayoutProps) => {
               />
             </div>
             <NotificationBell />
-            <Button variant="outline" className="rounded-2xl">
-              <Bell className="h-4 w-4" />
-              <span className="hidden lg:inline">Activity</span>
-            </Button>
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
