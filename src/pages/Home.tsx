@@ -17,6 +17,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import AppLayout from "@/components/AppLayout";
 import { calculateDistance } from "@/lib/geolocation";
 import { useRealtimeLocation } from "@/hooks/useRealtimeLocation";
+import GoogleMapEmbed from "@/components/marketplace/GoogleMapEmbed";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 16 },
@@ -56,6 +57,7 @@ const Home = () => {
   );
   const [feedAds, setFeedAds] = useState<NativeAd[]>([placeholderFeedAd]);
   const [bannerAd, setBannerAd] = useState<NativeAd>(placeholderBannerAd);
+  const [showMapView, setShowMapView] = useState(true);
   const { coords: browsingCoords, status: locationStatus, refresh: refreshLocation } = useRealtimeLocation();
 
   const firstName = user?.user_metadata?.full_name?.split(" ")[0] || "there";
@@ -288,6 +290,38 @@ const Home = () => {
                 <Button asChild className="rounded-xl">
                   <a href={bannerAd.cta_url} target="_blank" rel="noreferrer">{bannerAd.cta_label || "Learn More"}</a>
                 </Button>
+              </div>
+            )}
+          </div>
+
+          <div className="mt-3 rounded-2xl border bg-card p-3">
+            <div className="mb-3 flex items-center justify-between">
+              <p className="text-sm font-semibold text-foreground">Nearby services around your location</p>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowMapView((prev) => !prev)}
+                className="rounded-full"
+              >
+                {showMapView ? "List view" : "Map view"}
+              </Button>
+            </div>
+
+            {showMapView ? (
+              <GoogleMapEmbed
+                latitude={browsingCoords?.latitude}
+                longitude={browsingCoords?.longitude}
+                title="Nearby service map"
+                className="h-56"
+              />
+            ) : (
+              <div className="max-h-56 space-y-2 overflow-y-auto pr-1">
+                {nearbyWorkers.slice(0, 8).map((worker) => (
+                  <div key={`home-list-${worker.id}`} className="rounded-xl border bg-muted/30 px-3 py-2">
+                    <p className="text-sm font-medium text-foreground">{worker.name}</p>
+                    <p className="text-xs text-muted-foreground">{worker.profession} • {worker.distance > 0 ? `${worker.distance.toFixed(1)} km` : "Nearby"}</p>
+                  </div>
+                ))}
               </div>
             )}
           </div>
