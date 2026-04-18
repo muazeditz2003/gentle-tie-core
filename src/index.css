@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Poppins:wght@600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700;800&family=Space+Grotesk:wght@500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -6,83 +6,83 @@
 
 @layer base {
   :root {
-    --background: 220 20% 97%;
-    --foreground: 220 30% 10%;
+    --background: 150 25% 97%;
+    --foreground: 168 32% 11%;
 
     --card: 0 0% 100%;
-    --card-foreground: 220 30% 10%;
+    --card-foreground: 168 32% 11%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 220 30% 10%;
+    --popover-foreground: 168 32% 11%;
 
-    --primary: 151 74% 43%;
+    --primary: 154 84% 40%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 211 72% 59%;
+    --secondary: 170 70% 31%;
     --secondary-foreground: 0 0% 100%;
 
-    --muted: 220 14% 96%;
-    --muted-foreground: 220 10% 46%;
+    --muted: 154 20% 94%;
+    --muted-foreground: 165 12% 40%;
 
-    --accent: 29 100% 96%;
-    --accent-foreground: 29 100% 38%;
+    --accent: 164 55% 90%;
+    --accent-foreground: 168 62% 24%;
 
     --destructive: 359 100% 65%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 220 13% 91%;
-    --input: 220 13% 91%;
-    --ring: 151 74% 43%;
+    --border: 154 16% 87%;
+    --input: 154 16% 87%;
+    --ring: 154 84% 40%;
 
-    --radius: 1rem;
+    --radius: 1.2rem;
 
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 151 74% 43%;
+    --sidebar-primary: 154 84% 40%;
     --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 151 45% 94%;
-    --sidebar-accent-foreground: 151 74% 30%;
+    --sidebar-accent: 154 40% 92%;
+    --sidebar-accent-foreground: 154 74% 28%;
     --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 151 74% 43%;
+    --sidebar-ring: 154 84% 40%;
 
-    --success: 152 60% 40%;
+    --success: 154 62% 35%;
     --success-foreground: 0 0% 100%;
     --warning: 29 100% 50%;
     --warning-foreground: 220 30% 10%;
     --star: 45 100% 51%;
 
-    --gradient-start: 151 74% 43%;
-    --gradient-end: 211 72% 59%;
+    --gradient-start: 154 84% 40%;
+    --gradient-end: 184 78% 44%;
   }
 
   .dark {
-    --background: 222 47% 6%;
+    --background: 166 34% 8%;
     --foreground: 210 40% 98%;
 
-    --card: 222 47% 10%;
+    --card: 166 31% 11%;
     --card-foreground: 210 40% 98%;
 
-    --popover: 222 47% 10%;
+    --popover: 166 31% 11%;
     --popover-foreground: 210 40% 98%;
 
-    --primary: 151 74% 46%;
+    --primary: 154 84% 43%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 211 70% 50%;
+    --secondary: 184 68% 44%;
     --secondary-foreground: 0 0% 100%;
 
-    --muted: 222 30% 16%;
-    --muted-foreground: 215 20% 55%;
+    --muted: 166 18% 17%;
+    --muted-foreground: 161 12% 63%;
 
-    --accent: 29 65% 16%;
-    --accent-foreground: 29 85% 78%;
+    --accent: 166 28% 18%;
+    --accent-foreground: 163 35% 84%;
 
     --destructive: 359 77% 58%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 222 30% 18%;
-    --input: 222 30% 18%;
-    --ring: 151 74% 46%;
+    --border: 166 18% 22%;
+    --input: 166 18% 22%;
+    --ring: 154 84% 43%;
   }
 }
 
@@ -93,11 +93,11 @@
 
   body {
     @apply bg-background text-foreground font-sans antialiased;
-    font-family: 'Inter', system-ui, sans-serif;
+    font-family: 'DM Sans', system-ui, sans-serif;
   }
 
   h1, h2, h3, h4, h5, h6 {
-    font-family: 'Poppins', 'Inter', system-ui, sans-serif;
+    font-family: 'Space Grotesk', 'DM Sans', system-ui, sans-serif;
   }
 }
 
@@ -125,8 +125,12 @@
 
   .shadow-premium {
     box-shadow: 0 1px 2px hsl(var(--foreground) / 0.04),
-                0 4px 8px hsl(var(--foreground) / 0.04),
-                0 12px 24px hsl(var(--foreground) / 0.06);
+                0 8px 18px hsl(var(--foreground) / 0.06),
+                0 18px 38px hsl(var(--foreground) / 0.08);
+  }
+
+  .surface-soft {
+    @apply border border-border/60 bg-card/90 backdrop-blur-xl;
   }
 
   .animate-float {

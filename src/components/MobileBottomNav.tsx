@@ -45,14 +45,14 @@ const MobileBottomNav = () => {
 
   return (
     <>
-      <div className="md:hidden fixed bottom-[5.5rem] right-4 z-50">
+      <div className="md:hidden fixed bottom-[5.75rem] right-4 z-50">
         <Popover>
           <PopoverTrigger asChild>
-            <Button size="icon" className="h-14 w-14 rounded-2xl shadow-premium">
+            <Button size="icon" className="h-14 w-14 rounded-2xl bg-gradient-brand text-primary-foreground shadow-premium hover:opacity-95">
               <Plus className="h-6 w-6" />
             </Button>
           </PopoverTrigger>
-          <PopoverContent align="end" className="w-52 rounded-2xl p-2">
+          <PopoverContent align="end" className="w-56 rounded-2xl border-border/60 p-2 shadow-premium">
             <Link to="/discover" className="tap-feedback flex items-center gap-2 rounded-xl px-3 py-2 text-sm hover:bg-muted">
               <BriefcaseBusiness className="h-4 w-4 text-primary" />
               <span>Find Service</span>
@@ -97,7 +97,7 @@ const MobileBottomNav = () => {
                 to={item.to}
                 className={`tap-feedback flex flex-col items-center justify-center gap-1 rounded-xl py-2 text-[10px] font-semibold transition-all ${
                   active
-                    ? "bg-primary/10 text-primary"
+                    ? "bg-gradient-brand text-primary-foreground shadow-sm"
                     : item.urgent
                       ? "text-destructive"
                       : "text-muted-foreground"

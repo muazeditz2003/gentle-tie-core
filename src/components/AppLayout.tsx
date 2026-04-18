@@ -46,7 +46,7 @@ const AppLayout = ({ title, subtitle, action, children }: AppLayoutProps) => {
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="md:hidden sticky top-0 z-40 border-b bg-card/95 backdrop-blur-xl">
+      <header className="md:hidden sticky top-0 z-40 border-b border-border/60 bg-gradient-brand text-primary-foreground shadow-premium">
         <div className="flex h-16 items-center justify-between px-4">
           <Link to="/" className="flex items-center gap-2">
             <img src={logoImg} alt="NearKonnect" className="h-8 object-contain" loading="lazy" />
@@ -56,7 +56,7 @@ const AppLayout = ({ title, subtitle, action, children }: AppLayoutProps) => {
       </header>
 
       <div className="mx-auto hidden max-w-[1200px] md:flex md:gap-6 md:px-4 md:py-6">
-        <aside className="sticky top-6 h-[calc(100vh-3rem)] w-64 rounded-3xl border bg-card p-4 shadow-premium">
+        <aside className="sticky top-6 h-[calc(100vh-3rem)] w-64 rounded-3xl border border-border/60 bg-card/95 p-4 shadow-premium backdrop-blur-xl">
           <Link to="/" className="mb-5 flex items-center gap-2 px-2">
             <img src={logoImg} alt="NearKonnect" className="h-9 object-contain" loading="lazy" />
           </Link>
@@ -70,7 +70,7 @@ const AppLayout = ({ title, subtitle, action, children }: AppLayoutProps) => {
                   to={item.to}
                   className={`flex items-center gap-3 rounded-2xl px-3 py-3 text-sm font-semibold transition-all ${
                     active
-                      ? "bg-primary/12 text-primary"
+                      ? "bg-gradient-brand text-primary-foreground shadow-sm"
                       : item.emphasis
                         ? "text-destructive hover:bg-destructive/10"
                         : "text-muted-foreground hover:bg-muted"
@@ -85,7 +85,7 @@ const AppLayout = ({ title, subtitle, action, children }: AppLayoutProps) => {
         </aside>
 
         <div className="min-w-0 flex-1">
-          <div className="sticky top-6 z-30 mb-5 flex items-center gap-3 rounded-3xl border bg-card/95 p-3 backdrop-blur-xl shadow-premium">
+          <div className="sticky top-6 z-30 mb-5 flex items-center gap-3 rounded-3xl border border-border/60 bg-card/95 p-3 backdrop-blur-xl shadow-premium">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
@@ -128,7 +128,7 @@ const AppLayout = ({ title, subtitle, action, children }: AppLayoutProps) => {
             </DropdownMenu>
           </div>
 
-          <main className="rounded-3xl border bg-card p-6 shadow-premium">
+          <main className="rounded-3xl border border-border/60 bg-card p-6 shadow-premium">
             <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
               <div>
                 <h1 className="text-2xl font-bold text-foreground">{title}</h1>
@@ -141,7 +141,7 @@ const AppLayout = ({ title, subtitle, action, children }: AppLayoutProps) => {
         </div>
       </div>
 
-      <main className="px-4 pb-32 pt-4 md:hidden">
+      <main className="px-4 pb-32 pt-5 md:hidden">
         <div className="mb-5 flex items-start justify-between gap-3">
           <div>
             <h1 className="text-2xl font-bold text-foreground">{title}</h1>

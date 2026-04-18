@@ -128,7 +128,7 @@ const WorkerProfile = () => {
           <ArrowLeft className="w-4 h-4" /> Back to search
         </Link>
 
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-card border rounded-2xl p-6 md:p-8 pb-24 md:pb-8">
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="rounded-2xl border border-border/60 bg-card p-6 pb-24 shadow-premium md:p-8 md:pb-8">
           <div className="flex flex-col sm:flex-row gap-6 items-start">
             {worker.profilePhoto ? (
               <img src={worker.profilePhoto} alt={worker.name} className="w-24 h-24 rounded-2xl object-cover shrink-0" />
@@ -157,15 +157,15 @@ const WorkerProfile = () => {
                 </Badge>
               </div>
               <div className="mt-4 grid grid-cols-3 gap-2 text-xs">
-                <div className="rounded-xl bg-muted p-2 text-center">
+                <div className="rounded-xl border border-border/50 bg-muted p-2 text-center">
                   <ShieldCheck className="mx-auto mb-1 h-4 w-4 text-primary" />
                   Trust Verified
                 </div>
-                <div className="rounded-xl bg-muted p-2 text-center">
+                <div className="rounded-xl border border-border/50 bg-muted p-2 text-center">
                   <Clock3 className="mx-auto mb-1 h-4 w-4 text-secondary" />
                   Replies fast
                 </div>
-                <div className="rounded-xl bg-muted p-2 text-center">
+                <div className="rounded-xl border border-border/50 bg-muted p-2 text-center">
                   <MapPin className="mx-auto mb-1 h-4 w-4 text-warning" />
                   Local expert
                 </div>
@@ -229,7 +229,7 @@ const WorkerProfile = () => {
 
           {/* Write Review */}
           {user && user.id !== worker.userId && (
-            <div className="mt-8 p-4 rounded-xl bg-muted/50">
+            <div className="mt-8 rounded-xl border border-border/60 bg-muted/50 p-4">
               <h2 className="font-semibold text-card-foreground mb-3">Leave a Review</h2>
               <div className="flex items-center gap-2 mb-3">
                 <Label className="text-sm">Rating:</Label>
@@ -255,7 +255,7 @@ const WorkerProfile = () => {
             ) : (
               <div className="space-y-4">
                 {dbReviews.map((r: any) => (
-                  <div key={r.id} className="p-4 rounded-xl bg-muted/50">
+                  <div key={r.id} className="rounded-xl border border-border/60 bg-muted/50 p-4">
                     <div className="flex items-center justify-between mb-2">
                       <span className="font-medium text-sm text-card-foreground">{r.profiles?.full_name || "Anonymous"}</span>
                       <span className="text-xs text-muted-foreground">{new Date(r.created_at).toLocaleDateString()}</span>
