@@ -24,7 +24,7 @@ const WorkerCard = ({ worker, index = 0, sponsored = false }: Props) => {
     >
       <Link
         to={`/worker/${worker.id}`}
-        className={`tap-feedback block rounded-2xl border bg-card p-3 transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-premium md:p-5 group ${
+        className={`tap-feedback block rounded-2xl border border-border/70 bg-card p-3 transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-premium md:p-5 group ${
           sponsored ? "border-primary/40 shadow-premium" : ""
         }`}
       >
@@ -56,7 +56,7 @@ const WorkerCard = ({ worker, index = 0, sponsored = false }: Props) => {
             </div>
             <p className="mt-1 text-xs font-semibold text-primary">Starting from PKR 1,500</p>
             <div className="mt-2 flex flex-wrap items-center gap-2 md:gap-3 text-[11px] text-muted-foreground md:text-xs">
-              <span className="flex items-center gap-1 px-2 py-0.5 bg-star/10 rounded-full">
+              <span className="flex items-center gap-1 rounded-full bg-muted px-2 py-0.5">
                 <Star className="w-3 h-3 text-star fill-star" />
                 <span className="font-semibold text-card-foreground">{worker.rating}</span>
                 <span>({worker.reviewCount})</span>
